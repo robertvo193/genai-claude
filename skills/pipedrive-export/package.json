@@ -1,0 +1,16 @@
+{
+  "name": "pipedrive-export-skill",
+  "version": "1.0.0",
+  "description": "Export Pipedrive deals and email threads to Excel and Google Sheets",
+  "type": "module",
+  "scripts": {
+    "export": "node --import tsx scripts/export.ts"
+  },
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}

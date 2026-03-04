@@ -1,0 +1,35 @@
+{
+  "use_case": "Danger Zone Detection",
+  "dataset_path": "dataset-mexico-complete",
+  "current_phase": "Training Model",
+  "progress": 75,
+  "todos": [
+    {
+      "content": "Parse user request and validate dataset",
+      "status": "completed"
+    },
+    {
+      "content": "Survey dataset (count images, identify classes)",
+      "status": "completed"
+    },
+    {
+      "content": "Prepare train/val/test splits using yolo-finetune skill",
+      "status": "completed"
+    },
+    {
+      "content": "Train YOLO model using yolo-finetune skill",
+      "status": "in_progress"
+    },
+    {
+      "content": "Evaluate and package results",
+      "status": "pending"
+    }
+  ],
+  "metrics": {
+    "images": 1026,
+    "classes": 9,
+    "epoch": "75/100",
+    "map50": "0.582"
+  },
+  "last_updated": "2026-02-02 13:15:12"
+}

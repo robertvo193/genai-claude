@@ -1,0 +1,25 @@
+{
+  "name": "template2slide-pro",
+  "version": "1.0.0",
+  "description": "Proposal template to presentation converter (PowerPoint + PDF)",
+  "main": "index.js",
+  "scripts": {
+    "install-deps": "npm install && npx playwright install chromium",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "presentation",
+    "pptx",
+    "pdf",
+    "proposal",
+    "video-analytics"
+  ],
+  "author": "viAct",
+  "license": "ISC",
+  "dependencies": {
+    "@mermaid-js/mermaid-cli": "10.9.1",
+    "playwright": "1.57.0",
+    "pptxgenjs": "^4.0.1",
+    "sharp": "0.34.5"
+  }
+}
