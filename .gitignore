@@ -1,0 +1,12 @@
+agents/*
+backups/*
+debug/*
+file-history/*
+ide/*
+projects/*
+**/bin/*
+**/__pycache__/*
+**/node_modules/*
+**/statsig/*
+todos/*
+**/prompts/*

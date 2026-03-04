@@ -1,0 +1,336 @@
+---
+name: quotation-generate
+description: Generate PowerPoint and PDF from verified proposal templates with 4-step workflow
+version: 1.0.0
+---
+
+# Quotation Generate Workflow
+
+## Overview
+
+Convert verified proposal templates (.md) into professional PowerPoint presentations and PDF documents with viAct branding.
+
+## Workflow: 4 Steps
+
+```
+Step 1: Create Output Directory
+  → ./output/[Project]_[YYYYMMDD]_[HHMMSS]/
+  → Create slides/ subdirectory
+
+Step 2: Generate HTML Slides
+  → Parse template.md (12 sections)
+  → Use SLIDE_TEMPLATES.md (7 templates)
+  → Apply viAct branding (#00AEEF blue, white text)
+  → Prevent text overflow (margins: 0 120pt 85pt 40pt)
+  → Generate architecture diagram if needed
+
+Step 3: Generate PowerPoint
+  → Use pptx skill (html2pptx workflow)
+  → Output: [Project]_proposal.pptx
+
+Step 4: Generate PDF
+  → Use pdf skill (PPTX → PDF)
+  → Output: [Project]_proposal.pdf
+```
+
+## Input Requirements
+
+- **Template file**: Verified proposal template (`.md` format)
+- **No placeholders**: Template must NOT contain `[PLACEHOLDER_ID]` tags
+- **12 sections**: Must follow standard viAct proposal structure
+- **Dependencies**: pptx skill, pdf skill must be available
+
+## Output Structure
+
+```
+./output/
+└── [ProjectName]_[YYYYMMDD]_[HHMMSS]/
+    ├── [Project]_proposal.pptx
+    ├── [Project]_proposal.pdf
+    └── slides/                      (optional: HTML source)
+        ├── slide01_cover.html
+        ├── slide02_requirements.html
+        └── ...
+```
+
+## State Schema
+
+```json
+{
+  "session_id": "quotation-{timestamp}",
+  "status": "in_progress" | "completed" | "failed",
+  "template": "{template_path}",
+  "project_name": "{project_name}",
+  "output_dir": "./output/{project}_{timestamp}/",
+  "steps": [
+    {
+      "step": 1,
+      "name": "Create Output Directory",
+      "status": "pending" | "in_progress" | "completed",
+      "started_at": "ISO8601",
+      "completed_at": "ISO8601",
+      "output": "{output_dir_path}"
+    },
+    {
+      "step": 2,
+      "name": "Generate HTML Slides",
+      "status": "pending" | "in_progress" | "completed",
+      "started_at": "ISO8601",
+      "completed_at": "ISO8601",
+      "output": "{slides_dir_path}"
+    },
+    {
+      "step": 3,
+      "name": "Generate PowerPoint",
+      "status": "pending" | "in_progress" | "completed",
+      "started_at": "ISO8601",
+      "completed_at": "ISO8601",
+      "output": "{pptx_file_path}"
+    },
+    {
+      "step": 4,
+      "name": "Generate PDF",
+      "status": "pending" | "in_progress" | "completed",
+      "started_at": "ISO8601",
+      "completed_at": "ISO8601",
+      "output": "{pdf_file_path}"
+    }
+  ],
+  "created_at": "ISO8601",
+  "updated_at": "ISO8601"
+}
+```
+
+## Step Details
+
+### Step 1: Create Output Directory
+
+**Actions**:
+1. Extract project name from template
+2. Generate timestamp: `$(date +%Y%m%d_%H%M%S)`
+3. Create directory: `./output/[Project]_[Timestamp]/`
+4. Create subdirectory: `slides/`
+5. Update state with output_dir path
+
+**Validation**:
+- Directory created successfully
+- Write permissions confirmed
+
+**Output**: `{output_dir}` path
+
+### Step 2: Generate HTML Slides
+
+**Actions**:
+1. Read template.md (12 sections)
+2. Read `~/.claude/skills/quotation_skill/SLIDE_TEMPLATES.md`
+3. Map sections to templates:
+   - Cover Page → Template 1
+   - General Content → Template 2
+   - Two-Column (Scope) → Template 3
+   - AI Modules → Template 5 (one per module)
+   - Timeline → Template 6
+4. Apply viAct branding:
+   - Background: `file:///home/philiptran/.claude/skills/quotation_skill/assets/background.png`
+   - Primary color: #00AEEF
+   - Text color: #FFFFFF
+   - Font: Arial, Helvetica, Verdana
+5. Set correct margins: `0 120pt 85pt 40pt` (prevents overflow)
+6. Generate architecture diagram if SYSTEM ARCHITECTURE section exists:
+   - Run: `python ~/.claude/skills/quotation_skill/scripts/generate_architecture_diagram.py`
+   - Convert: `mmdc -i architecture.mmd -o architecture.png`
+   - Embed in HTML slide
+7. Save HTML files to `slides/` directory
+
+**Validation**:
+- All text wrapped in `<p>`, `<h1>`-`<h6>`, `<ul>`, or `<ol>` tags
+- Background uses absolute `file://` URL
+- Content margins ≥85pt (bottom)
+- Font size ≥10pt
+- Slide dimensions: 720pt × 405pt
+
+**Output**: `{slides_dir}` path with HTML files
+
+### Step 3: Generate PowerPoint
+
+**Actions**:
+1. Use pptx skill with html2pptx workflow
+2. Input: HTML slides from Step 2
+3. Convert: HTML → PowerPoint
+4. Output: `[Project]_proposal.pptx`
+
+**Command** (via pptx skill):
+```bash
+cd ~/.claude/skills/pptx
+node scripts/html2pptx.js "{slides_dir}" "{output_dir}/{project}_proposal.pptx"
+```
+
+**Validation**:
+- PPTX file exists
+- File size > 0
+- All slides converted
+
+**Output**: `{pptx_file_path}`
+
+### Step 4: Generate PDF
+
+**Actions**:
+1. Use pdf skill (PPTX → PDF conversion)
+2. Input: PowerPoint from Step 3
+3. Convert: PPTX → PDF
+4. Output: `[Project]_proposal.pdf`
+
+**Command** (via pdf skill):
+```bash
+libreoffice --headless --convert-to pdf \
+  --outdir "{output_dir}" \
+  "{pptx_file_path}"
+```
+
+**Validation**:
+- PDF file exists
+- File size > 0
+- All pages present
+
+**Output**: `{pdf_file_path}`
+
+## Error Handling
+
+| Error | Solution |
+|-------|----------|
+| Template file not found | Show clear error with file path |
+| Template has placeholders | "Template must be verified first (no [PLACEHOLDER_ID])" |
+| Missing sections | "Template must have 12 sections" |
+| pptx skill not available | "pptx skill not found. Install: ~/.claude/skills/pptx/" |
+| pdf skill not available | "pdf skill not found. Install: ~/.claude/skills/pdf/" |
+| HTML text overflow | "Use two-column layout (Template 3) or split into 2 slides" |
+| Background not showing | "Background MUST use absolute file:// URL" |
+| PPTX generation failed | "Check html2pptx script and HTML validation" |
+| PDF conversion failed | "Install LibreOffice: sudo apt install libreoffice" |
+
+## Key Features
+
+### viAct Branding
+- **Primary Color**: #00AEEF (viAct Blue)
+- **Text Color**: #FFFFFF (White)
+- **Font**: Arial, Helvetica, Verdana (web-safe)
+- **Background**: `assets/background.png` (720×405px)
+- **Slide Size**: 720pt × 405pt (16:9)
+
+### Text Overflow Prevention
+- **Smart Detection**: Auto-detects text coverage >90%
+- **Solution**: Two-column layout instead of tiny fonts
+- **Margins**: `0 120pt 85pt 40pt` (right 120pt for logo, bottom 85pt minimum)
+- **Font sizes**: 11pt body (readable), 28pt titles
+
+### Architecture Diagram
+- **Script**: `~/.claude/skills/quotation_skill/scripts/generate_architecture_diagram.py`
+- **Auto-generates**: From SYSTEM ARCHITECTURE section
+- **Process**: Template → Mermaid → PNG → HTML embed
+- **Tool**: mermaid-cli (`mmdc`)
+
+### Dependencies
+- **pptx skill**: `~/.claude/skills/pptx/` - html2pptx workflow
+- **pdf skill**: `~/.claude/skills/pdf/` - PPTX → PDF conversion
+- **LibreOffice**: PDF generation
+
+## Template Structure Mapping
+
+| Section | Template | Description |
+|---------|----------|-------------|
+| 1. Cover Page | Template 1 | Title slide |
+| 2. Project Requirements | Template 2 | Content slide |
+| 3. Scope of Work | Template 3 | Two-column layout |
+| 4. Client Requirements | Template 2 | Content slide |
+| 5. System Architecture | Auto-generated | Diagram + text |
+| 6. System Design | Template 2 | Content slide |
+| 7. Solutions | Template 2 | Content slide |
+| 8. System Requirements | Template 2 | Content slide |
+| 9. Implementation Plan | Template 6 | Timeline (two-column) |
+| 10. AI Modules | Template 5 | One per module |
+| 11. Limitations | Template 2 | Content slide |
+
+## Success Criteria
+
+- ✅ Template validated (12 sections, no placeholders)
+- ✅ Output directory created with timestamp
+- ✅ HTML slides generated with viAct branding
+- ✅ Architecture diagram generated (if applicable)
+- ✅ PowerPoint file created successfully
+- ✅ PDF file created successfully
+- ✅ No text overflow in final outputs
+- ✅ All backgrounds rendered correctly
+
+## Usage
+
+```bash
+/quotation generate slide <template.md>
+```
+
+**Example**:
+```bash
+/quotation generate slide Leda_Inio_template.md
+```
+
+**Output**:
+```
+Step 1/4: Create Output Directory [✓ COMPLETED]
+Step 2/4: Generate HTML Slides [✓ COMPLETED]
+Step 3/4: Generate PowerPoint [✓ COMPLETED]
+Step 4/4: Generate PDF [✓ COMPLETED]
+
+✅ Complete!
+Output: ./output/Leda_Inio_20250126_163030/
+  ├── Leda_Inio_proposal.pptx
+  └── Leda_Inio_proposal.pdf
+```
+
+## State Management
+
+State files are saved to:
+```
+.workflow/.quotation/{session_id}/state.json
+```
+
+Each step updates the state file with:
+- Step status (pending → in_progress → completed)
+- Timestamps (started_at, completed_at)
+- Output paths
+- Errors (if any)
+
+## Implementation Notes
+
+### What the Workflow Hides from Users
+
+- HTML generation details
+- SLIDE_TEMPLATES.md complexity
+- Branding specifications
+- Overflow prevention logic
+- Diagram generation internals
+- pptx/pdf skill invocations
+
+### What the Workflow Shows to Users
+
+- Current step (1/4, 2/4, 3/4, 4/4)
+- Progress indicators (🔄 in_progress, ✅ completed, ⏳ pending)
+- Clear error messages
+- Output file paths
+- Completion status
+
+### Validation (Internal, Transparent Errors)
+
+All validation happens internally:
+- Template format checks
+- Dependency availability
+- File generation success
+- Output validation
+
+Errors are shown clearly to users with actionable messages.
+
+## Version History
+
+**v1.0.0** (2025-01-26)
+- Initial 4-step workflow
+- Support for 7 HTML templates
+- Architecture diagram generation
+- Text overflow prevention
+- State management with progress tracking

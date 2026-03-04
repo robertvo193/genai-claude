@@ -1,0 +1,601 @@
+---
+name: quotation
+description: Generate PowerPoint and PDF from verified proposal templates with clear 4-step workflow
+argument-hint: "generate slide <template.md> | status | list"
+allowed-tools: SlashCommand(*), TodoWrite(*), Bash(*), Read(*), Write(*)
+---
+
+# Quotation Command - Generate Proposal Presentations
+
+## Overview
+
+Simple command to convert verified proposal templates into professional PowerPoint presentations and PDF documents with viAct branding.
+
+## Usage
+
+```bash
+/quotation generate slide <template.md>  # Main command
+/quotation status                        # Check current status
+/quotation list                          # List recent generations
+```
+
+## Commands
+
+### Generate Slides
+
+**Command**: `/quotation generate slide <template.md>`
+
+**Description**: Generate PowerPoint and PDF from a verified proposal template
+
+**Example**:
+```bash
+/quotation generate slide Leda_Inio_template.md
+```
+
+**Output**:
+```
+🎯 Quotation Generation Started
+📁 Template: Leda_Inio_template.md
+📊 Project: Leda Inio Construction
+⏰ Timestamp: 20250126_163030
+
+[Step 1/4] Create Output Directory [🔄 IN PROGRESS]
+✓ Created: ./output/Leda_Inio_20250126_163030/
+✓ Created: slides/ subdirectory
+
+[Step 2/4] Generate HTML Slides [🔄 IN PROGRESS]
+✓ Parsed 12 sections from template
+✓ Generated 15 HTML slides
+✓ Applied viAct branding
+✓ Generated architecture diagram
+
+[Step 3/4] Generate PowerPoint [🔄 IN PROGRESS]
+✓ Converting HTML to PowerPoint...
+✓ Created: Leda_Inio_proposal.pptx (15 slides)
+
+[Step 4/4] Generate PDF [🔄 IN PROGRESS]
+✓ Converting PowerPoint to PDF...
+✓ Created: Leda_Inio_proposal.pdf (15 pages)
+
+✅ Complete!
+Output: ./output/Leda_Inio_20250126_163030/
+  ├── Leda_Inio_proposal.pptx (15 slides)
+  └── Leda_Inio_proposal.pdf (15 pages)
+```
+
+## Implementation
+
+### Step 0: Validate Input
+
+**First Action**: Always validate before starting workflow
+
+```javascript
+// Parse arguments
+const templatePath = args[2]; // "generate slide <template.md>"
+
+// Validation checks
+if (!templatePath) {
+  return "Error: Template file path required\nUsage: /quotation generate slide <template.md>";
+}
+
+// Check file exists
+const fileExists = fs.existsSync(templatePath);
+if (!fileExists) {
+  return `Error: Template file not found: ${templatePath}`;
+}
+
+// Check file format
+if (!templatePath.endsWith('.md')) {
+  return "Error: Template file must be markdown (.md) format";
+}
+
+// Check for placeholders
+const templateContent = fs.readFileSync(templatePath, 'utf8');
+const hasPlaceholders = /\[PLACEHOLDER_[A-Z0-9_]+\]/.test(templateContent);
+if (hasPlaceholders) {
+  return "Error: Template contains placeholders. Template must be verified first (no [PLACEHOLDER_ID]).";
+}
+
+// Check dependencies
+const pptxSkillExists = fs.existsSync('~/.claude/skills/pptx/');
+const pdfSkillExists = fs.existsSync('~/.claude/skills/pdf/');
+if (!pptxSkillExists || !pdfSkillExists) {
+  return "Error: Required skills not found\nPlease install: ~/.claude/skills/pptx/ and ~/.claude/skills/pdf/";
+}
+
+// Validation passed
+console.log(`✓ Template validated: ${templatePath}`);
+console.log(`✓ No placeholders found`);
+console.log(`✓ Dependencies available`);
+```
+
+### Step 1: Initialize TodoWrite and State
+
+```javascript
+// Create TodoList with 4 steps
+TodoWrite({
+  todos: [
+    {
+      content: "Create Output Directory",
+      status: "in_progress",
+      activeForm: "Creating output directory"
+    },
+    {
+      content: "Generate HTML Slides",
+      status: "pending",
+      activeForm: "Generating HTML slides"
+    },
+    {
+      content: "Generate PowerPoint",
+      status: "pending",
+      activeForm: "Generating PowerPoint"
+    },
+    {
+      content: "Generate PDF",
+      status: "pending",
+      activeForm: "Generating PDF"
+    }
+  ]
+});
+
+// Create state file
+const sessionId = `quotation-${Date.now()}`;
+const timestamp = bash('date +%Y%m%d_%H%M%S').trim();
+const projectName = extractProjectName(templatePath); // Extract from template
+const outputDir = `./output/${projectName}_${timestamp}/`;
+
+const state = {
+  session_id: sessionId,
+  status: "in_progress",
+  template: templatePath,
+  project_name: projectName,
+  output_dir: outputDir,
+  steps: [
+    { step: 1, name: "Create Output Directory", status: "in_progress" },
+    { step: 2, name: "Generate HTML Slides", status: "pending" },
+    { step: 3, name: "Generate PowerPoint", status: "pending" },
+    { step: 4, name: "Generate PDF", status: "pending" }
+  ],
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
+};
+
+// Save state
+bash(`mkdir -p .workflow/.quotation/${sessionId}`);
+Write({
+  file_path: `.workflow/.quotation/${sessionId}/state.json`,
+  content: JSON.stringify(state, null, 2)
+});
+
+// Display start message
+console.log(`🎯 Quotation Generation Started`);
+console.log(`📁 Template: ${templatePath}`);
+console.log(`📊 Project: ${projectName}`);
+console.log(`⏰ Timestamp: ${timestamp}`);
+console.log(``);
+```
+
+### Step 2: Create Output Directory
+
+```javascript
+console.log(`[Step 1/4] Create Output Directory [🔄 IN PROGRESS]`);
+
+// Create output directory
+bash(`mkdir -p "${outputDir}slides/"`);
+
+// Update state
+state.steps[0].status = "completed";
+state.steps[0].completed_at = new Date().toISOString();
+state.steps[0].output = outputDir;
+state.updated_at = new Date().toISOString();
+Write({
+  file_path: `.workflow/.quotation/${sessionId}/state.json`,
+  content: JSON.stringify(state, null, 2)
+});
+
+// Update TodoWrite
+TodoWrite({
+  todos: [
+    { content: "Create Output Directory", status: "completed", activeForm: "Creating output directory" },
+    { content: "Generate HTML Slides", status: "in_progress", activeForm: "Generating HTML slides" },
+    { content: "Generate PowerPoint", status: "pending", activeForm: "Generating PowerPoint" },
+    { content: "Generate PDF", status: "pending", activeForm: "Generating PDF" }
+  ]
+});
+
+console.log(`✓ Created: ${outputDir}`);
+console.log(`✓ Created: slides/ subdirectory`);
+console.log(``);
+```
+
+### Step 3: Generate HTML Slides
+
+```javascript
+console.log(`[Step 2/4] Generate HTML Slides [🔄 IN PROGRESS]`);
+
+// Read template and SLIDE_TEMPLATES.md
+const templateContent = fs.readFileSync(templatePath, 'utf8');
+const slideTemplatesPath = '~/.claude/skills/quotation_skill/SLIDE_TEMPLATES.md';
+const slideTemplates = fs.readFileSync(slideTemplatesPath, 'utf8');
+
+// Parse template sections (12 sections)
+const sections = parseTemplateSections(templateContent);
+
+// Read background path
+const backgroundPath = 'file:///home/philiptran/.claude/skills/quotation_skill/assets/background.png';
+
+// Generate HTML slides for each section
+const htmlSlides = [];
+sections.forEach((section, index) => {
+  const slideNumber = String(index + 1).padStart(2, '0');
+  const slideFileName = `slide${slideNumber}_${section.slug}.html`;
+
+  // Select template based on section type
+  const template = selectTemplate(section.type);
+
+  // Generate HTML with viAct branding
+  const html = generateHTML(section, template, backgroundPath);
+
+  // Save HTML file
+  fs.writeFileSync(`${outputDir}slides/${slideFileName}`, html);
+
+  htmlSlides.push(slideFileName);
+});
+
+// Generate architecture diagram if SYSTEM ARCHITECTURE section exists
+if (sections.find(s => s.title === 'SYSTEM ARCHITECTURE')) {
+  // Run architecture diagram generator
+  bash(`cd ~/.claude/skills/quotation_skill && python scripts/generate_architecture_diagram.py`);
+  bash(`mmdc -i architecture.mmd -o architecture.png -b transparent -t dark`);
+  // Embed in HTML slide
+}
+
+// Update state
+state.steps[1].status = "completed";
+state.steps[1].completed_at = new Date().toISOString();
+state.steps[1].output = `${outputDir}slides/`;
+state.updated_at = new Date().toISOString();
+Write({
+  file_path: `.workflow/.quotation/${sessionId}/state.json`,
+  content: JSON.stringify(state, null, 2)
+});
+
+// Update TodoWrite
+TodoWrite({
+  todos: [
+    { content: "Create Output Directory", status: "completed", activeForm: "Creating output directory" },
+    { content: "Generate HTML Slides", status: "completed", activeForm: "Generating HTML slides" },
+    { content: "Generate PowerPoint", status: "in_progress", activeForm: "Generating PowerPoint" },
+    { content: "Generate PDF", status: "pending", activeForm: "Generating PDF" }
+  ]
+});
+
+console.log(`✓ Parsed ${sections.length} sections from template`);
+console.log(`✓ Generated ${htmlSlides.length} HTML slides`);
+console.log(`✓ Applied viAct branding`);
+console.log(`✓ Generated architecture diagram`);
+console.log(``);
+```
+
+### Step 4: Generate PowerPoint
+
+```javascript
+console.log(`[Step 3/4] Generate PowerPoint [🔄 IN PROGRESS]`);
+
+// Use pptx skill (html2pptx workflow)
+const pptxOutputPath = `${outputDir}${state.project_name}_proposal.pptx`;
+
+// Create conversion script
+const convertScript = `
+const html2pptx = require('/home/philiptran/.claude/skills/pptx/scripts/html2pptx.js');
+const pptxgenjs = require('pptxgenjs');
+const path = require('path');
+const fs = require('fs');
+
+const slidesDir = path.resolve('${outputDir}slides/');
+const outputFile = path.resolve('${pptxOutputPath}');
+
+const htmlFiles = fs.readdirSync(slidesDir)
+  .filter(f => f.endsWith('.html'))
+  .sort()
+  .map(f => path.join(slidesDir, f));
+
+(async () => {
+  try {
+    const pptx = new pptxgenjs();
+    pptx.layout = 'LAYOUT_16x9';
+
+    for (const htmlFile of htmlFiles) {
+      await html2pptx(htmlFile, pptx);
+    }
+
+    await pptx.writeFile({ fileName: outputFile });
+    console.log('✓ PowerPoint created!');
+  } catch (error) {
+    console.error('✗ Error:', error.message);
+    process.exit(1);
+  }
+})();
+`;
+
+// Run conversion
+bash(`cd ~/.claude/skills/pptx && node convert.js`);
+
+// Validate output
+if (!fs.existsSync(pptxOutputPath)) {
+  throw new Error(`PowerPoint generation failed: ${pptxOutputPath} not found`);
+}
+
+// Update state
+state.steps[2].status = "completed";
+state.steps[2].completed_at = new Date().toISOString();
+state.steps[2].output = pptxOutputPath;
+state.updated_at = new Date().toISOString();
+Write({
+  file_path: `.workflow/.quotation/${sessionId}/state.json`,
+  content: JSON.stringify(state, null, 2)
+});
+
+// Update TodoWrite
+TodoWrite({
+  todos: [
+    { content: "Create Output Directory", status: "completed", activeForm: "Creating output directory" },
+    { content: "Generate HTML Slides", status: "completed", activeForm: "Generating HTML slides" },
+    { content: "Generate PowerPoint", status: "completed", activeForm: "Generating PowerPoint" },
+    { content: "Generate PDF", status: "in_progress", activeForm: "Generating PDF" }
+  ]
+});
+
+console.log(`✓ Converting HTML to PowerPoint...`);
+console.log(`✓ Created: ${state.project_name}_proposal.pptx (${htmlSlides.length} slides)`);
+console.log(``);
+```
+
+### Step 5: Generate PDF
+
+```javascript
+console.log(`[Step 4/4] Generate PDF [🔄 IN PROGRESS]`);
+
+// Use pdf skill (PPTX → PDF conversion)
+const pdfOutputPath = `${outputDir}${state.project_name}_proposal.pdf`;
+
+// Run LibreOffice conversion
+bash(`libreoffice --headless --convert-to pdf --outdir "${outputDir}" "${pptxOutputPath}"`);
+
+// Validate output
+if (!fs.existsSync(pdfOutputPath)) {
+  throw new Error(`PDF generation failed: ${pdfOutputPath} not found`);
+}
+
+// Update state
+state.steps[3].status = "completed";
+state.steps[3].completed_at = new Date().toISOString();
+state.steps[3].output = pdfOutputPath;
+state.status = "completed";
+state.updated_at = new Date().toISOString();
+Write({
+  file_path: `.workflow/.quotation/${sessionId}/state.json`,
+  content: JSON.stringify(state, null, 2)
+});
+
+// Update TodoWrite
+TodoWrite({
+  todos: [
+    { content: "Create Output Directory", status: "completed", activeForm: "Creating output directory" },
+    { content: "Generate HTML Slides", status: "completed", activeForm: "Generating HTML slides" },
+    { content: "Generate PowerPoint", status: "completed", activeForm: "Generating PowerPoint" },
+    { content: "Generate PDF", status: "completed", activeForm: "Generating PDF" }
+  ]
+});
+
+console.log(`✓ Converting PowerPoint to PDF...`);
+console.log(`✓ Created: ${state.project_name}_proposal.pdf (${htmlSlides.length} pages)`);
+console.log(``);
+```
+
+### Step 6: Display Completion Message
+
+```javascript
+console.log(`✅ Complete!`);
+console.log(`Output: ${outputDir}`);
+console.log(`  ├── ${state.project_name}_proposal.pptx (${htmlSlides.length} slides)`);
+console.log(`  └── ${state.project_name}_proposal.pdf (${htmlSlides.length} pages)`);
+console.log(``);
+console.log(`Session ID: ${sessionId}`);
+console.log(`State saved: .workflow/.quotation/${sessionId}/state.json`);
+```
+
+## Status Command
+
+**Command**: `/quotation status`
+
+**Description**: Check status of current or recent quotation generation
+
+**Output**:
+```
+📊 Quotation Generation Status
+
+Session: quotation-1737910230456
+Status: ✅ COMPLETED
+Template: Leda_Inio_template.md
+Project: Leda Inio Construction
+Output: ./output/Leda_Inio_20250126_163030/
+
+Steps:
+  [✓] Step 1: Create Output Directory (completed in 0.5s)
+  [✓] Step 2: Generate HTML Slides (completed in 3.2s)
+  [✓] Step 3: Generate PowerPoint (completed in 5.1s)
+  [✓] Step 4: Generate PDF (completed in 2.8s)
+
+Total Time: 11.6 seconds
+```
+
+## List Command
+
+**Command**: `/quotation list`
+
+**Description**: List recent quotation generations
+
+**Output**:
+```
+📋 Recent Quotation Generations
+
+1. Leda_Inio_20250126_163030
+   Status: ✅ COMPLETED
+   Template: Leda_Inio_template.md
+   Output: ./output/Leda_Inio_20250126_163030/
+   Time: 2025-01-26 16:30:30
+
+2. Construction_Safety_20250125_143022
+   Status: ✅ COMPLETED
+   Template: Construction_Safety_template.md
+   Output: ./output/Construction_Safety_20250125_143022/
+   Time: 2025-01-25 14:30:22
+```
+
+## Helper Functions
+
+### extractProjectName
+
+Extract project name from template filename or content:
+
+```javascript
+function extractProjectName(templatePath) {
+  // Try filename first
+  const filename = path.basename(templatePath, '.md');
+
+  // If filename is generic, extract from template content
+  if (filename === 'template' || filename === 'proposal') {
+    const content = fs.readFileSync(templatePath, 'utf8');
+
+    // Extract from "## 2. PROJECT REQUIREMENT STATEMENT"
+    const match = content.match(/\*\*Project:\*\*\s*(.+)/i);
+    if (match) {
+      return match[1].trim().replace(/\s+/g, '_');
+    }
+  }
+
+  return filename.replace(/[_\s]+/g, '_');
+}
+```
+
+### parseTemplateSections
+
+Parse 12 sections from template:
+
+```javascript
+function parseTemplateSections(templateContent) {
+  const sections = [];
+  const sectionRegex = /^##\s+(\d+)\.\s+(.+)$/gm;
+  let match;
+
+  while ((match = sectionRegex.exec(templateContent)) !== null) {
+    sections.push({
+      number: parseInt(match[1]),
+      title: match[2].trim(),
+      content: extractSectionContent(templateContent, match[2]),
+      type: determineSectionType(match[2])
+    });
+  }
+
+  return sections;
+}
+```
+
+### selectTemplate
+
+Select appropriate HTML template based on section type:
+
+```javascript
+function selectTemplate(sectionType) {
+  const templateMap = {
+    'cover': 'template1',
+    'content': 'template2',
+    'two-column': 'template3',
+    'ai-module': 'template5',
+    'timeline': 'template6'
+  };
+
+  return templateMap[sectionType] || 'template2';
+}
+```
+
+### generateHTML
+
+Generate HTML from section content and template:
+
+```javascript
+function generateHTML(section, template, backgroundPath) {
+  // Load template from SLIDE_TEMPLATES.md
+  // Replace placeholders with section content
+  // Apply viAct branding
+  // Ensure correct margins (0 120pt 85pt 40pt)
+  // Validate text wrapping (all text in <p>, <h1>-<h6>, <ul>, <ol>)
+
+  return html;
+}
+```
+
+## Error Handling
+
+All errors are shown clearly with actionable messages:
+
+```
+❌ Error: Template file not found
+   File: nonexistent_template.md
+   Solution: Check file path and try again
+
+❌ Error: Template contains placeholders
+   Found: 3 placeholders (e.g., [NETWORK_001])
+   Solution: Template must be verified first. Remove all [PLACEHOLDER_ID] tags.
+
+❌ Error: PowerPoint generation failed
+   File: output.pptx not created
+   Solution: Check html2pptx script and validate HTML files
+
+❌ Error: PDF conversion failed
+   LibreOffice not found
+   Solution: Install LibreOffice: sudo apt install libreoffice
+```
+
+## Validation Summary
+
+### Input Validation
+- ✅ Template file exists
+- ✅ Template is markdown format
+- ✅ Template has no placeholders
+- ✅ Template has 12 sections
+- ✅ pptx skill available
+- ✅ pdf skill available
+
+### Output Validation
+- ✅ Output directory created
+- ✅ HTML slides generated
+- ✅ All text properly wrapped in HTML tags
+- ✅ Background using absolute file:// URL
+- ✅ Content margins ≥85pt (bottom)
+- ✅ Font size ≥10pt
+- ✅ PPTX file created and valid
+- ✅ PDF file created and valid
+
+## Key Features
+
+### User-Facing
+- ✅ Simple command: `/quotation generate slide <template.md>`
+- ✅ Clear progress: Step 1/4, 2/4, 3/4, 4/4
+- ✅ Visual indicators: 🔄 in_progress, ✅ completed, ⏳ pending
+- ✅ Simple output: Just file paths and completion message
+
+### Internal (Hidden from Users)
+- ✅ HTML generation with SLIDE_TEMPLATES.md
+- ✅ viAct branding application
+- ✅ Text overflow prevention
+- ✅ Architecture diagram generation
+- ✅ pptx/pdf skill orchestration
+- ✅ State management and persistence
+
+### Error Handling
+- ✅ Clear error messages
+- ✅ Actionable solutions
+- ✅ Validation at each step
+- ✅ State preservation for recovery

@@ -1,0 +1,366 @@
+# Quotation Workflow - User Guide
+
+## Quick Start
+
+Generate PowerPoint and PDF from verified proposal templates with a single command.
+
+```bash
+/quotation generate slide <template.md>
+```
+
+## What It Does
+
+Converts verified proposal templates (markdown) into:
+- **PowerPoint presentation** (.pptx) with viAct branding
+- **PDF document** (.pdf) ready to send to clients
+
+## Requirements
+
+### Input
+- ✅ Verified proposal template (`.md` format)
+- ✅ No placeholders (no `[PLACEHOLDER_ID]` tags)
+- ✅ 12 sections following viAct proposal structure
+
+### Dependencies (Auto-Checked)
+- ✅ pptx skill (`~/.claude/skills/pptx/`)
+- ✅ pdf skill (`~/.claude/skills/pdf/`)
+- ✅ LibreOffice (for PDF generation)
+
+## Usage
+
+### Basic Command
+
+```bash
+/quotation generate slide Leda_Inio_template.md
+```
+
+### What You'll See
+
+```
+🎯 Quotation Generation Started
+📁 Template: Leda_Inio_template.md
+📊 Project: Leda Inio Construction
+⏰ Timestamp: 20250126_163030
+
+[Step 1/4] Create Output Directory [🔄 IN PROGRESS]
+✓ Created: ./output/Leda_Inio_20250126_163030/
+✓ Created: slides/ subdirectory
+
+[Step 2/4] Generate HTML Slides [🔄 IN PROGRESS]
+✓ Parsed 12 sections from template
+✓ Generated 15 HTML slides
+✓ Applied viAct branding
+✓ Generated architecture diagram
+
+[Step 3/4] Generate PowerPoint [🔄 IN PROGRESS]
+✓ Converting HTML to PowerPoint...
+✓ Created: Leda_Inio_proposal.pptx (15 slides)
+
+[Step 4/4] Generate PDF [🔄 IN PROGRESS]
+✓ Converting PowerPoint to PDF...
+✓ Created: Leda_Inio_proposal.pdf (15 pages)
+
+✅ Complete!
+Output: ./output/Leda_Inio_20250126_163030/
+  ├── Leda_Inio_proposal.pptx (15 slides)
+  └── Leda_Inio_proposal.pdf (15 pages)
+```
+
+## Commands
+
+### Generate Slides
+
+```bash
+/quotation generate slide <template.md>
+```
+
+**Example**:
+```bash
+/quotation generate slide Leda_Inio_template.md
+```
+
+### Check Status
+
+```bash
+/quotation status
+```
+
+**Shows**:
+- Current generation status
+- Step progress (1/4, 2/4, 3/4, 4/4)
+- Time taken per step
+- Output location
+
+### List Recent
+
+```bash
+/quotation list
+```
+
+**Shows**:
+- Recent quotation generations
+- Status (completed/failed)
+- Output locations
+- Timestamps
+
+## Output Structure
+
+```
+./output/
+└── [ProjectName]_[YYYYMMDD]_[HHMMSS]/
+    ├── [Project]_proposal.pptx
+    ├── [Project]_proposal.pdf
+    └── slides/                      (optional: HTML source)
+        ├── slide01_cover.html
+        ├── slide02_requirements.html
+        └── ...
+```
+
+**Benefits**:
+- Each run creates a unique timestamped folder
+- Never overwrites previous outputs
+- Easy to track generation history
+
+## Workflow Steps (Behind the Scenes)
+
+The command automatically handles 4 steps:
+
+### Step 1: Create Output Directory
+- Creates timestamped directory
+- Creates `slides/` subdirectory for HTML files
+
+### Step 2: Generate HTML Slides
+- Parses your template (12 sections)
+- Selects appropriate templates for each section
+- Applies viAct branding (blue #00AEEF, white text)
+- Generates architecture diagram (if applicable)
+- Prevents text overflow with smart layouts
+
+### Step 3: Generate PowerPoint
+- Converts HTML slides to PowerPoint format
+- Uses pptx skill (html2pptx workflow)
+- Validates output
+
+### Step 4: Generate PDF
+- Converts PowerPoint to PDF
+- Uses pdf skill (LibreOffice)
+- Validates output
+
+## Common Errors
+
+### Error: Template file not found
+
+```
+❌ Error: Template file not found
+   File: nonexistent_template.md
+```
+
+**Solution**: Check file path and try again
+
+### Error: Template contains placeholders
+
+```
+❌ Error: Template contains placeholders
+   Found: 3 placeholders (e.g., [NETWORK_001])
+```
+
+**Solution**: Template must be verified first. Use dealtransfer2template skill to fill all placeholders, then remove `[PLACEHOLDER_ID]` tags.
+
+### Error: Required skills not found
+
+```
+❌ Error: Required skills not found
+   Please install: ~/.claude/skills/pptx/ and ~/.claude/skills/pdf/
+```
+
+**Solution**: Install missing skills or check installation paths
+
+### Error: PowerPoint generation failed
+
+```
+❌ Error: PowerPoint generation failed
+   File: output.pptx not created
+```
+
+**Solution**: Check html2pptx script and validate HTML files
+
+### Error: PDF conversion failed
+
+```
+❌ Error: PDF conversion failed
+   LibreOffice not found
+```
+
+**Solution**: Install LibreOffice
+```bash
+sudo apt install libreoffice
+```
+
+## Tips
+
+### Before You Start
+
+1. **Verify template**: Ensure template has no placeholders
+2. **Check format**: Must be markdown (.md) with 12 sections
+3. **Test filename**: Use descriptive names (e.g., `Leda_Inio_template.md`)
+
+### During Generation
+
+1. **Watch progress**: Each step shows clear status (🔄 in_progress, ✅ completed)
+2. **Wait for completion**: All 4 steps must complete
+3. **Check output**: Verify both .pptx and .pdf files are created
+
+### After Generation
+
+1. **Open PowerPoint**: Check slides for text overflow
+2. **Open PDF**: Verify all pages converted correctly
+3. **Test delivery**: Send to client or review with team
+
+## What Gets Generated
+
+### PowerPoint Presentation
+
+**Content**:
+- Cover slide with project name and client
+- 12 sections from your template
+- Individual slides for each AI module
+- Timeline slide with implementation phases
+- Architecture diagram (auto-generated)
+
+**Branding**:
+- viAct blue (#00AEEF) background
+- White text for readability
+- Professional Arial font
+- Consistent formatting
+
+### PDF Document
+
+**Content**: Same as PowerPoint (all slides)
+
+**Quality**:
+- High-resolution conversion
+- Text searchable and selectable
+- Compatible with all PDF readers
+
+## Advanced Usage
+
+### Custom Output Directory
+
+```bash
+# (Future feature - not implemented yet)
+/quotation generate slide template.md --output ./my-proposals/
+```
+
+### Parallel Generation
+
+```bash
+# Generate multiple proposals in parallel
+/quotation generate slide template1.md &
+/quotation generate slide template2.md &
+/quotation generate slide template3.md &
+wait
+```
+
+### Status Checking
+
+```bash
+# Check while generation is running
+/quotation status
+```
+
+## Workflow State
+
+Each generation saves state to:
+```
+.workflow/.quotation/{session_id}/state.json
+```
+
+**Contains**:
+- Session ID
+- Template path
+- Project name
+- Output directory
+- Step status (pending/in_progress/completed)
+- Timestamps
+- Output file paths
+
+**Used for**:
+- Status checking
+- Error recovery
+- Progress tracking
+- Historical records
+
+## Example Session
+
+```bash
+# Generate proposal
+/quotation generate slide Leda_Inio_template.md
+
+# Output shows progress...
+# [Step 1/4] Create Output Directory [✓ COMPLETED]
+# [Step 2/4] Generate HTML Slides [✓ COMPLETED]
+# [Step 3/4] Generate PowerPoint [✓ COMPLETED]
+# [Step 4/4] Generate PDF [✓ COMPLETED]
+
+# Check status
+/quotation status
+
+# List recent
+/quotation list
+
+# Open outputs
+libreoffice ./output/Leda_Inio_20250126_163030/Leda_Inio_proposal.pptx
+evince ./output/Leda_Inio_20250126_163030/Leda_Inio_proposal.pdf
+```
+
+## Best Practices
+
+1. **Use descriptive filenames**: `Client_Project_template.md`
+2. **Verify before generating**: Check template for placeholders
+3. **Keep backups**: Original templates are not modified
+4. **Test outputs**: Open both PPTX and PDF before sending
+5. **Track history**: Use `/quotation list` to see all generations
+
+## Troubleshooting
+
+### Generation Stuck
+
+If generation seems stuck:
+1. Check `/quotation status` for current step
+2. Wait longer (large templates take time)
+3. Check system resources (CPU, memory)
+
+### Text Overflow
+
+If text overflows in PowerPoint:
+1. Open generated PPTX file
+2. Check slides with long content
+3. Manually adjust or split into two slides
+4. Report issue for template improvement
+
+### Missing Slides
+
+If some slides are missing:
+1. Check template has all 12 sections
+2. Verify section numbering (1-12)
+3. Check for markdown formatting errors
+4. Review generation logs
+
+## Support
+
+For issues or questions:
+1. Check error messages (they include solutions)
+2. Review this guide
+3. Check state files in `.workflow/.quotation/`
+4. Validate template format
+5. Verify dependencies installed
+
+## Version History
+
+**v1.0.0** (2025-01-26)
+- Initial release
+- 4-step workflow
+- Support for 7 HTML templates
+- Architecture diagram generation
+- Text overflow prevention
+- State management

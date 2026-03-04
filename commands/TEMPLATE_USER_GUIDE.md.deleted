@@ -1,0 +1,479 @@
+# Template Workflow - User Guide
+
+## Quick Start
+
+Generate proposal templates from Deal Transfer Excel files with a single command.
+
+```bash
+/template generate deal <excel.xlsx>
+```
+
+## What It Does
+
+Converts Deal Transfer Excel files into 3 proposal files:
+- **Template** (`_template.md`) - Clean proposal for clients
+- **Reasoning** (`_reasoning.md`) - Complete audit trail (internal)
+- **Checklist** (`_checklist.md`) - Placeholders for presale confirmation
+
+## Requirements
+
+### Input
+- ✅ Deal Transfer Excel file (`.xlsx` format)
+- ✅ S1 (Commercial) sheet - Customer info, pain points, timeline
+- ✅ S2 (Technical) sheet - Use cases, deployment, requirements
+
+### Dependencies (Auto-Checked)
+- ✅ Python 3
+- ✅ pandas library
+- ✅ openpyxl library
+
+## Usage
+
+### Basic Command
+
+```bash
+/template generate deal DT_0109.xlsx
+```
+
+### What You'll See
+
+```
+🎯 Template Generation Started
+📁 Excel: DT_0109.xlsx
+📊 Project: Leda Inio Construction
+⏰ Timestamp: 20250126_163030
+
+[Step 1/5] Validate Excel File [✓ COMPLETED]
+✓ File exists: DT_0109.xlsx
+✓ Valid Excel format (.xlsx)
+✓ S1 (Commercial) sheet found
+✓ S2 (Technical) sheet found
+
+[Step 2/5] Extract Deal Transfer Data [✓ COMPLETED]
+✓ Extracted 15 fields from S1 sheet
+✓ Extracted 22 fields from S2 sheet
+✓ Mapped pain points → 5 AI modules
+✓ Identified: 4 standard modules, 1 custom module
+
+[Step 3/5] Generate Template File [✓ COMPLETED]
+✓ Filled 12 sections from TEMPLATE.md
+✓ Created 8 placeholders for missing info
+✓ Clean proposal content (no source references)
+✓ Formatted: Project Requirement Statement
+
+[Step 4/5] Generate Reasoning File [✓ COMPLETED]
+✓ Documented all S1/S2 sources
+✓ Showed all calculations (bandwidth, storage)
+✓ Explained all 8 estimates
+✓ Complete audit trail
+
+[Step 5/5] Generate Checklist File [✓ COMPLETED]
+✓ Listed 8 placeholders
+✓ Formatted: ID | Section | Item | Estimated | Answer
+✓ Ready for presale review
+
+✅ Complete!
+Output: ./output/Leda_Inio_20250126_163030/
+  ├── Leda_Inio_template.md (12 sections, 8 placeholders)
+  ├── Leda_Inio_reasoning.md (complete audit trail)
+  └── Leda_Inio_checklist.md (8 items to confirm)
+
+📊 Statistics:
+  • S1 fields extracted: 15
+  • S2 fields extracted: 22
+  • AI modules mapped: 5
+  • Placeholders created: 8
+  • Sections filled: 12/12
+
+Next Steps:
+  1. Review Leda_Inio_checklist.md
+  2. Fill presale answers for placeholders
+  3. Update template with confirmed values
+  4. Generate slides: /quotation generate slide Leda_Inio_template.md
+```
+
+## Commands
+
+### Generate Template
+
+```bash
+/template generate deal <excel.xlsx>
+```
+
+**Description**: Generate proposal template, reasoning, and checklist from Deal Transfer Excel
+
+**Example**:
+```bash
+/template generate deal DT_0109.xlsx
+```
+
+### Check Status
+
+```bash
+/template status
+```
+
+**Shows**:
+- Current generation status
+- Step progress (1/5, 2/5, 3/5, 4/5, 5/5)
+- Extraction statistics
+- Output location
+
+### List Recent
+
+```bash
+/template list
+```
+
+**Shows**:
+- Recent template generations
+- Status (completed/failed)
+- Placeholder counts
+- Timestamps
+
+## Output Structure
+
+```
+./output/
+└── [ProjectName]_[YYYYMMDD]_[HHMMSS]/
+    ├── [Project_Name]_template.md      # Clean proposal
+    ├── [Project_Name]_reasoning.md     # Audit trail
+    └── [Project_Name]_checklist.md     # Placeholders
+```
+
+## Workflow Steps (Behind the Scenes)
+
+### Step 1: Validate Excel File
+- Check file exists
+- Validate .xlsx format (not .xls)
+- Verify S1 (Commercial) sheet exists
+- Verify S2 (Technical) sheet exists
+- Check field readability
+
+### Step 2: Extract Deal Transfer Data
+- Extract from S1 sheet (15-20 fields):
+  - Customer name
+  - Industry
+  - Pain points
+  - Camera status
+  - Timeline
+  - Budget
+- Extract from S2 sheet (20-30 fields):
+  - Use cases
+  - Deployment method
+  - Camera quantity
+  - AI module requirements
+  - Network/hardware requirements
+- Map pain points → AI modules
+- Identify standard vs custom modules
+
+### Step 3: Generate Template File
+- Fill 12 sections from TEMPLATE.md
+- Apply clean content rules:
+  - ✅ ONLY proposal content (client-facing)
+  - ✅ Pure markdown (NO HTML)
+  - ✅ Final values only (no calculations shown)
+  - ✅ Placeholders for estimates: `[Value] [PLACEHOLDER_ID]`
+  - ❌ NO source references
+  - ❌ NO reasoning explanations
+- Format Project Requirement Statement correctly
+- List AI modules separately (NOT merged)
+
+### Step 4: Generate Reasoning File
+- Document ALL sources:
+  - S1 field references
+  - S2 field references
+  - KB references
+- Show ALL calculations:
+  - Bandwidth calculations
+  - Storage calculations
+  - Timeline estimates
+- Explain ALL estimates:
+  - Why specific values chosen
+  - What standards followed
+  - What similar projects referenced
+
+### Step 5: Generate Checklist File
+- List all placeholders from template
+- Format as table:
+  - ID
+  - Section
+  - Item
+  - Content Estimated
+  - Presale's Answer (empty)
+- Sort by section for easy review
+
+## Output Files Explained
+
+### 1. Template File (`_template.md`)
+
+**Purpose**: Clean proposal content for clients
+
+**Content**:
+- 12 sections of professional proposal
+- Final values only
+- Placeholders for missing info: `[Value] [PLACEHOLDER_ID]`
+- NO source references
+- NO reasoning
+- NO calculations shown
+
+**Example GOOD content**:
+```markdown
+## 5. SYSTEM REQUIREMENTS
+
+### Network Requirements
+**Total System Bandwidth:** 120-150 Mbps [NETWORK_001]
+**Per-Camera Bandwidth:** 8-10 Mbps/camera
+```
+
+**Example BAD content** (goes in reasoning, NOT template):
+```markdown
+**Total System Bandwidth:** 120-150 Mbps [NETWORK_001] (15 cameras × 8-10 Mbps per camera, from S2)
+```
+
+### 2. Reasoning File (`_reasoning.md`)
+
+**Purpose**: Complete audit trail for internal team
+
+**Content**:
+- ALL source references (S1/S2 field names)
+- ALL calculations (show the math)
+- ALL KB references used
+- ALL reasoning (explain WHY)
+- ALL placeholder explanations
+
+**Example**:
+```markdown
+## 5. SYSTEM REQUIREMENTS
+
+### Network Requirements
+**Source**: S2 - "Does client have stable internet connection?" = "Yes"
+**Deployment**: Cloud (from S2)
+**Calculation**:
+- Per-camera bandwidth: 8-10 Mbps (standard for cloud streaming)
+- Total: 8-10 Mbps × 15 cameras = 120-150 Mbps
+- **Value**: "120-150 Mbps [NETWORK_001]"
+**Reasoning**: Standard cloud bandwidth calculation
+**KB Reference**: "Network Requirements - Cloud Deployment"
+```
+
+### 3. Checklist File (`_checklist.md`)
+
+**Purpose**: Track placeholders requiring presale confirmation
+
+**Format**:
+```markdown
+| ID | Section | Item | Content Estimated | Presale's Answer |
+|----|---------|------|-------------------|------------------|
+| NETWORK_001 | 5. SYSTEM REQUIREMENTS | Total Bandwidth | 120-150 Mbps | |
+| STORAGE_002 | 5. SYSTEM REQUIREMENTS | Storage Capacity | 2TB [STORAGE_002] | |
+```
+
+## Common Errors
+
+### Error: Excel file not found
+
+```
+❌ Error: Excel file not found
+   File: nonexistent_file.xlsx
+```
+
+**Solution**: Check file path and try again
+
+### Error: Invalid Excel format
+
+```
+❌ Error: Excel file must be .xlsx format
+   File: deal.xls
+```
+
+**Solution**: Convert to .xlsx format (not .xls)
+
+### Error: S1 sheet not found
+
+```
+❌ Error: S1 (Commercial) sheet not found
+```
+
+**Solution**: Ensure Excel has sheet named "Commercial" or "S1"
+
+### Error: S2 sheet not found
+
+```
+❌ Error: S2 (Technical) sheet not found
+```
+
+**Solution**: Ensure Excel has sheet named "Technical" or "S2"
+
+### Error: Python libraries not found
+
+```
+❌ Error: Required Python libraries not found
+   Libraries: pandas, openpyxl
+```
+
+**Solution**: Install libraries
+```bash
+pip install pandas openpyxl
+```
+
+## Template Quality Rules
+
+### Project Requirement Statement (Section 2)
+
+**MUST use this exact format**:
+
+```markdown
+## 2. PROJECT REQUIREMENT STATEMENT
+
+**Project:** AI-Powered Video Analytics for [Short Description]
+
+**Project Owner:** [Client Name]
+
+**Work Scope:** [Deployment method] AI system to [general objective]
+
+**Project Duration:** [X months/years]
+
+**Camera Number:** [X cameras]
+
+**AI Modules per Camera:** [X modules per camera]
+
+**AI Modules:**
+1. [Module Name 1]
+2. [Module Name 2]
+...
+```
+
+**Critical Rules**:
+- ✅ **Project** = ONE short sentence
+- ✅ All fields use `**Field:** Value` format (NOT `###`)
+- ✅ All fields at same level (no nesting)
+- ✅ **DO NOT merge AI modules** - List each separately
+  - ❌ WRONG: "PPE Detection (Helmet, Mask, Vest)"
+  - ✅ CORRECT: "1. Safety Helmet Detection" / "2. Safety Mask Detection"
+
+## Next Steps After Generation
+
+### 1. Review Checklist
+
+Open `{Project}_checklist.md` and review all placeholders
+
+### 2. Fill Presale Answers
+
+Add confirmed values in "Presale's Answer" column for each placeholder
+
+### 3. Update Template
+
+Replace `[Value] [PLACEHOLDER_ID]` in template with confirmed values
+
+**Example**:
+- **Before**: `120-150 Mbps [NETWORK_001]`
+- **After**: `130 Mbps` (confirmed value)
+
+### 4. Remove All Placeholders
+
+Ensure template has NO placeholders remaining
+
+### 5. Generate Slides
+
+Use quotation workflow:
+```bash
+/quotation generate slide {Project}_template.md
+```
+
+## Tips
+
+### Before You Start
+
+1. **Check Excel format**: Must be .xlsx (not .xls)
+2. **Verify sheets**: Ensure S1 and S2 sheets exist
+3. **Install dependencies**: `pip install pandas openpyxl`
+4. **Backup Excel**: Keep original file safe
+
+### During Generation
+
+1. **Watch progress**: Each step shows clear status
+2. **Check statistics**: Fields extracted, modules mapped
+3. **Note placeholder count**: More placeholders = more presale work
+
+### After Generation
+
+1. **Review template**: Check 12 sections filled correctly
+2. **Review reasoning**: Verify all sources documented
+3. **Review checklist**: Count placeholders to confirm
+4. **Start presale process**: Fill checklist answers
+
+## What Gets Generated
+
+### Template File (12 Sections)
+
+1. **Cover Page** - Project name, client, date
+2. **Project Requirement Statement** - Overview, objectives
+3. **Scope of Work** - In scope, out of scope
+4. **Client Requirements & Assumptions** - Needs, assumptions
+5. **System Architecture** - Components, data flow
+6. **System Design** - Design approach, technology
+7. **Solutions** - Primary solution, alternatives
+8. **System Requirements** - Network, camera, hardware
+9. **Implementation Plan** - Timeline phases
+10. **Proposed Modules** - AI module details
+11. **User Interface & Reporting** - Dashboard, alerts
+12. **Limitations** - Technical limitations
+
+### Smart Features
+
+- **AI Module Mapping**: Automatically maps pain points → modules
+- **Standard Module Detection**: Identifies standard vs custom modules
+- **Placeholder Management**: Creates unique IDs for tracking
+- **Calculation Logic**: Computes bandwidth, storage, timeline
+- **Template Structure**: Follows viAct 12-section format
+
+## Troubleshooting
+
+### Generation Stuck
+
+If generation seems stuck:
+1. Check `/template status` for current step
+2. Wait longer (large Excel files take time)
+3. Check system resources (CPU, memory)
+
+### Missing Sections
+
+If template has missing sections:
+1. Check Excel has required fields
+2. Verify S1/S2 sheet names match
+3. Review field names in Excel
+
+### Too Many Placeholders
+
+If placeholder count is high (>20):
+1. Check Excel data completeness
+2. Verify field names match reference
+3. Fill more data in Excel before regeneration
+
+### Wrong AI Modules
+
+If AI modules seem incorrect:
+1. Review pain points in Excel S2
+2. Check use cases in Excel S2
+3. Verify module mapping logic
+
+## Support
+
+For issues or questions:
+1. Check error messages (include solutions)
+2. Review this guide
+3. Check state files in `.workflow/.template/`
+4. Validate Excel format
+5. Verify dependencies installed
+
+## Version History
+
+**v1.0.0** (2025-01-26)
+- Initial release
+- 5-step workflow
+- Support for Deal Transfer Excel files
+- 3-file output (template, reasoning, checklist)
+- AI module mapping
+- Placeholder management
+- Statistics tracking

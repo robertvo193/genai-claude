@@ -1,0 +1,104 @@
+# Template Command - Quick Reference
+
+## Command
+
+```bash
+/template generate deal <excel.xlsx>
+```
+
+## What It Does
+
+Converts Deal Transfer Excel files → 3 proposal files
+
+**Input**: Deal Transfer Excel (.xlsx with S1 + S2 sheets)
+**Output**: Template + Reasoning + Checklist files
+
+## Example
+
+```bash
+/template generate deal DT_0109.xlsx
+```
+
+**Output**:
+```
+🎯 Template Generation Started
+📁 Excel: DT_0109.xlsx
+📊 Project: Leda Inio Construction
+
+[Step 1/5] Validate Excel File [✓ COMPLETED]
+[Step 2/5] Extract Deal Transfer Data [✓ COMPLETED]
+[Step 3/5] Generate Template File [✓ COMPLETED]
+[Step 4/5] Generate Reasoning File [✓ COMPLETED]
+[Step 5/5] Generate Checklist File [✓ COMPLETED]
+
+✅ Complete!
+Output: ./output/Leda_Inio_20250126_163030/
+  ├── Leda_Inio_template.md (12 sections, 8 placeholders)
+  ├── Leda_Inio_reasoning.md (complete audit trail)
+  └── Leda_Inio_checklist.md (8 items to confirm)
+
+📊 Statistics:
+  • S1 fields extracted: 15
+  • S2 fields extracted: 22
+  • AI modules mapped: 5
+  • Placeholders created: 8
+```
+
+## Other Commands
+
+```bash
+/template status    # Check current status
+/template list      # List recent generations
+```
+
+## Requirements
+
+- ✅ Deal Transfer Excel (.xlsx format)
+- ✅ S1 (Commercial) sheet
+- ✅ S2 (Technical) sheet
+- ✅ Python 3 + pandas + openpyxl
+
+## Workflow: 5 Steps
+
+1. **Validate Excel File** - Check format and sheets
+2. **Extract Deal Transfer Data** - Parse S1 + S2
+3. **Generate Template File** - 12 sections with placeholders
+4. **Generate Reasoning File** - Complete audit trail
+5. **Generate Checklist File** - Track placeholders
+
+## Output Structure
+
+```
+./output/[Project]_[YYYYMMDD]_[HHMMSS]/
+  ├── [Project]_template.md      # Clean proposal
+  ├── [Project]_reasoning.md     # Audit trail
+  └── [Project]_checklist.md     # Placeholders
+```
+
+## Next Steps
+
+1. Review checklist
+2. Fill presale answers
+3. Update template with confirmed values
+4. Generate slides: `/quotation generate slide <template.md>`
+
+## Common Errors
+
+| Error | Solution |
+|-------|----------|
+| Excel file not found | Check file path |
+| Invalid format | Convert to .xlsx (not .xls) |
+| S1/S2 sheet not found | Verify sheet names |
+| Python libraries missing | `pip install pandas openpyxl` |
+
+## Tips
+
+1. **Check Excel format**: Must be .xlsx
+2. **Verify sheets**: S1 (Commercial) + S2 (Technical)
+3. **Review placeholders**: More = more presale work
+4. **Fill checklist**: Before generating slides
+
+## Support
+
+Full guide: `~/.claude/commands/TEMPLATE_USER_GUIDE.md`
+Workflow: `~/.claude/workflows/template-generate.md`

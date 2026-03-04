@@ -1,0 +1,443 @@
+---
+name: template-generate
+description: Generate technical proposal templates from Deal Transfer Excel files with 5-step workflow
+version: 1.0.0
+---
+
+# Template Generate Workflow
+
+## Overview
+
+Convert Deal Transfer Excel files (S1 Commercial + S2 Technical sheets) into technical proposal templates with reasoning and checklist files.
+
+## Workflow: 5 Steps
+
+```
+Step 1: Validate Excel File
+  → Check file exists
+  → Validate Excel format
+  → Verify S1 (Commercial) sheet exists
+  → Verify S2 (Technical) sheet exists
+
+Step 2: Extract Deal Transfer Data
+  → Extract from S1 sheet (customer info, pain points, timeline)
+  → Extract from S2 sheet (use cases, deployment, requirements)
+  → Parse using field names from FIELD_NAMES_REFERENCE.md
+
+Step 3: Generate Template File
+  → Fill 12 sections from TEMPLATE.md
+  → Apply clean proposal content rules
+  → Add placeholders for missing info: [Value] [PLACEHOLDER_ID]
+  → Output: [Project_Name]_template.md
+
+Step 4: Generate Reasoning File
+  → Document all sources (S1/S2 field references)
+  → Show all calculations and logic
+  → Explain all estimates and placeholders
+  → Output: [Project_Name]_reasoning.md
+
+Step 5: Generate Checklist File
+  → List all placeholders requiring confirmation
+  → Format: ID | Section | Item | Estimated | Presale's Answer
+  → Output: [Project_Name]_checklist.md
+```
+
+## Input Requirements
+
+- **Deal Transfer Excel file**: `.xlsx` format with 2 sheets
+  - **S1 (Commercial)**: Customer info, pain points, timeline, camera status
+  - **S2 (Technical)**: Use cases, deployment method, requirements
+- **File format**: Must be valid Excel (.xlsx, not .xls)
+
+## Output Files (3 Files)
+
+```
+./output/[ProjectName]_[YYYYMMDD]_[HHMMSS]/
+├── [Project_Name]_template.md      # Clean proposal (client-facing)
+├── [Project_Name]_reasoning.md     # Audit trail (internal)
+└── [Project_Name]_checklist.md     # Placeholders (presale confirmation)
+```
+
+## State Schema
+
+```json
+{
+  "session_id": "template-{timestamp}",
+  "status": "in_progress" | "completed" | "failed",
+  "excel_file": "{excel_file_path}",
+  "project_name": "{project_name}",
+  "output_dir": "./output/{project}_{timestamp}/",
+  "steps": [
+    {
+      "step": 1,
+      "name": "Validate Excel File",
+      "status": "pending" | "in_progress" | "completed",
+      "started_at": "ISO8601",
+      "completed_at": "ISO8601",
+      "output": "{validation_results}"
+    },
+    {
+      "step": 2,
+      "name": "Extract Deal Transfer Data",
+      "status": "pending" | "in_progress" | "completed",
+      "started_at": "ISO8601",
+      "completed_at": "ISO8601",
+      "output": "{extracted_data_summary}"
+    },
+    {
+      "step": 3,
+      "name": "Generate Template File",
+      "status": "pending" | "in_progress" | "completed",
+      "started_at": "ISO8601",
+      "completed_at": "ISO8601",
+      "output": "{template_file_path}"
+    },
+    {
+      "step": 4,
+      "name": "Generate Reasoning File",
+      "status": "pending" | "in_progress" | "completed",
+      "started_at": "ISO8601",
+      "completed_at": "ISO8601",
+      "output": "{reasoning_file_path}"
+    },
+    {
+      "step": 5,
+      "name": "Generate Checklist File",
+      "status": "pending" | "in_progress" | "completed",
+      "started_at": "ISO8601",
+      "completed_at": "ISO8601",
+      "output": "{checklist_file_path}"
+    }
+  ],
+  "statistics": {
+    "s1_fields_extracted": 0,
+    "s2_fields_extracted": 0,
+    "placeholders_created": 0,
+    "sections_filled": 0
+  },
+  "created_at": "ISO8601",
+  "updated_at": "ISO8601"
+}
+```
+
+## Step Details
+
+### Step 1: Validate Excel File
+
+**Actions**:
+1. Check file exists
+2. Validate file format (.xlsx)
+3. Open Excel file
+4. Verify S1 (Commercial) sheet exists
+5. Verify S2 (Technical) sheet exists
+6. Check for required fields (sample check)
+
+**Validation**:
+- File is valid Excel format
+- Both sheets exist
+- Fields are readable
+
+**Output**: Validation results (success/fail)
+
+### Step 2: Extract Deal Transfer Data
+
+**Actions**:
+1. Read FIELD_NAMES_REFERENCE.md
+2. Extract from S1 (Commercial) sheet:
+   - Customer name
+   - Industry
+   - Pain points
+   - Camera status (existing/new)
+   - Timeline
+   - Budget
+3. Extract from S2 (Technical) sheet:
+   - Use cases
+   - Deployment method (cloud/on-premise)
+   - Camera quantity
+   - AI module requirements
+   - Network requirements
+   - Hardware requirements
+4. Map pain points → AI modules (using logic document)
+5. Determine standard vs custom modules (using STANDARD_MODULES.md)
+
+**Output**: Extracted data summary
+
+### Step 3: Generate Template File
+
+**Actions**:
+1. Read TEMPLATE.md (12-section structure)
+2. Fill each section with extracted data
+3. **CRITICAL**: Apply clean content rules:
+   - ✅ ONLY proposal content (client-facing)
+   - ✅ Pure markdown (NO HTML tags)
+   - ✅ Final values only (no calculations shown)
+   - ✅ Placeholders for estimates: `[Value] [PLACEHOLDER_ID]`
+   - ❌ NO source references (no "from S1", "from S2")
+   - ❌ NO reasoning (no "because", "based on")
+   - ❌ NO calculations shown (just final result)
+4. Follow Project Requirement Statement format exactly:
+   - **Project:** ONE short sentence
+   - **Project Owner:** Client name
+   - **Work Scope:** ONE short sentence
+   - **Camera Number:** X cameras
+   - **AI Modules:** List each separately (NOT merged)
+5. Handle missing information:
+   - Make reasonable estimates
+   - Add placeholder: `[Estimated Value] [PLACEHOLDER_ID]`
+   - Document in reasoning file (Step 4)
+
+**Template File Rules**:
+- **What BELONGS**: Final values, descriptions, specifications
+- **What DOES NOT BELONG**: Source references, reasoning, calculations, meta-comments
+
+**Output**: `[Project_Name]_template.md`
+
+### Step 4: Generate Reasoning File
+
+**Actions**:
+1. Document ALL sources for each template value:
+   - S1 field references (exact field names)
+   - S2 field references
+   - KB references (which articles used)
+2. Show ALL calculations:
+   - Bandwidth calculations
+   - Storage calculations
+   - Timeline estimates
+3. Explain ALL estimates:
+   - Why specific values were chosen
+   - What standards/practices were followed
+   - What similar projects informed the estimate
+4. Document ALL decisions:
+   - AI module selection logic
+   - Deployment method reasoning
+   - Hardware choices
+5. Organize by template sections (1-12)
+
+**Purpose**: Complete audit trail for presale/internal review
+
+**Output**: `[Project_Name]_reasoning.md`
+
+### Step 5: Generate Checklist File
+
+**Actions**:
+1. Collect all placeholders from template
+2. Create table with columns:
+   - ID (e.g., NETWORK_001)
+   - Section (e.g., "5. SYSTEM REQUIREMENTS")
+   - Item (e.g., "Total Bandwidth")
+   - Content estimated (e.g., "120-150 Mbps")
+   - Presale's Answer (empty for presale to fill)
+3. Sort by section for easy review
+4. Add brief explanation for each placeholder
+
+**Format**:
+```markdown
+| ID | Section | Item | Content Estimated | Presale's Answer |
+|----|---------|------|-------------------|-----------------|
+| NETWORK_001 | 5. SYSTEM REQUIREMENTS | Total Bandwidth | 120-150 Mbps | |
+```
+
+**Output**: `[Project_Name]_checklist.md`
+
+## Error Handling
+
+| Error | Solution |
+|-------|----------|
+| Excel file not found | Show clear error with file path |
+| Invalid Excel format | "File must be .xlsx format (not .xls)" |
+| S1 sheet not found | "Commercial sheet (S1) not found in Excel file" |
+| S2 sheet not found | "Technical sheet (S2) not found in Excel file" |
+| Required fields missing | List missing fields, suggest estimates |
+| Python/pandas not installed | "Install pandas: pip install openpyxl pandas" |
+
+## Key Features
+
+### Data Extraction
+- **Field Names**: From `FIELD_NAMES_REFERENCE.md`
+- **AI Modules**: From `STANDARD_MODULES.md` (52KB database)
+- **Module Logic**: From `Logic_for_Determining_List_of_AI_Modules_*.md`
+- **Template Structure**: From `TEMPLATE.md` (12 sections)
+
+### Smart Module Mapping
+- Maps pain points → AI modules
+- Maps use cases → specific modules
+- Identifies standard vs custom modules
+- Lists each module separately (NO merging)
+
+### Placeholder Management
+- Format: `[Estimated Value] [PLACEHOLDER_ID]`
+- Unique IDs per section (e.g., NETWORK_001, STORAGE_002)
+- Documented in reasoning file
+- Tracked in checklist for presale confirmation
+
+### Template Quality Rules
+
+**Project Requirement Statement (Section 2)**:
+```
+**Project:** ONE short sentence (e.g., "AI-Powered Video Analytics for Safety Compliance")
+
+**Project Owner:** Client Name
+
+**Work Scope:** ONE short sentence (e.g., "Cloud-based AI system to monitor safety")
+
+**Project Duration:** X months/years
+
+**Camera Number:** X cameras
+
+**AI Modules per Camera:** X modules per camera
+
+**AI Modules:**
+1. Module Name 1
+2. Module Name 2
+...
+```
+
+**Critical Rules**:
+- ✅ All fields use `**Field:** Value` format (NOT `###` subheadings)
+- ✅ All fields at same level (no nesting)
+- ✅ DO NOT merge AI modules (list each separately)
+- ✅ Project = ONE short sentence
+- ✅ Work Scope = ONE short sentence
+
+## Template Structure (12 Sections)
+
+1. **COVER PAGE** - Project name, client, date, version
+2. **PROJECT REQUIREMENT STATEMENT** - Overview, objectives, KPIs
+3. **SCOPE OF WORK** - In scope, out of scope, responsibilities
+4. **CLIENT REQUIREMENTS & ASSUMPTIONS** - Needs, assumptions, infrastructure
+5. **SYSTEM ARCHITECTURE** - Components, data flow, integration
+6. **SYSTEM DESIGN** - Design approach, technology stack
+7. **SOLUTIONS** - Primary solution, alternatives, justification
+8. **SYSTEM REQUIREMENTS** - Network, camera, hardware, power
+9. **IMPLEMENTATION PLAN** - Timeline phases (T0-T3)
+10. **PROPOSED MODULES & FUNCTIONAL DESCRIPTION** - One slide per AI module
+11. **USER INTERFACE & REPORTING** - Dashboard, alerts, reporting (optional)
+12. **LIMITATIONS** - Technical, environmental, accuracy limitations
+
+## Dependencies
+
+- **Python libraries**: `pandas`, `openpyxl`
+- **Reference files**: All in `~/.claude/skills/dealtransfer2template/references/`
+- **Scripts**: `extract_deal_transfer.py`, `validate_output.py`
+
+## Success Criteria
+
+- ✅ Excel file validated (S1 + S2 sheets exist)
+- ✅ Data extracted from both sheets
+- ✅ Template generated (12 sections, clean content)
+- ✅ Reasoning generated (all sources documented)
+- ✅ Checklist generated (all placeholders listed)
+- ✅ No source references in template
+- ✅ Placeholders formatted correctly
+- ✅ AI modules listed separately (not merged)
+
+## Usage
+
+```bash
+/template generate deal <dealA.xlsx>
+```
+
+**Example**:
+```bash
+/template generate deal DT_0109.xlsx
+```
+
+**Output**:
+```
+🎯 Template Generation Started
+📁 Excel: DT_0109.xlsx
+📊 Project: Leda Inio Construction
+⏰ Timestamp: 20250126_163030
+
+[Step 1/5] Validate Excel File [✓ COMPLETED]
+✓ File exists: DT_0109.xlsx
+✓ S1 (Commercial) sheet found
+✓ S2 (Technical) sheet found
+
+[Step 2/5] Extract Deal Transfer Data [✓ COMPLETED]
+✓ Extracted 15 fields from S1
+✓ Extracted 22 fields from S2
+✓ Mapped 5 AI modules
+
+[Step 3/5] Generate Template File [✓ COMPLETED]
+✓ Filled 12 sections
+✓ Created 8 placeholders
+✓ Clean proposal content (no source references)
+
+[Step 4/5] Generate Reasoning File [✓ COMPLETED]
+✓ Documented all sources
+✓ Showed all calculations
+✓ Explained all estimates
+
+[Step 5/5] Generate Checklist File [✓ COMPLETED]
+✓ Listed 8 placeholders
+✓ Ready for presale review
+
+✅ Complete!
+Output: ./output/Leda_Inio_20250126_163030/
+  ├── Leda_Inio_template.md (12 sections, 8 placeholders)
+  ├── Leda_Inio_reasoning.md (complete audit trail)
+  └── Leda_Inio_checklist.md (8 items to confirm)
+```
+
+## State Management
+
+State files saved to:
+```
+.workflow/.template/{session_id}/state.json
+```
+
+Each step updates state with:
+- Step status (pending → in_progress → completed)
+- Timestamps
+- Statistics (fields extracted, placeholders created)
+- Output file paths
+
+## Implementation Notes
+
+### What the Workflow Hides from Users
+
+- Excel parsing complexity
+- Field name mappings
+- AI module logic
+- Standard module database lookups
+- Template structure details
+- Placeholder ID generation
+- Calculation formulas
+
+### What the Workflow Shows to Users
+
+- Current step (1/5, 2/5, 3/5, 4/5, 5/5)
+- Progress indicators
+- Extraction statistics
+- Placeholder count
+- Output file locations
+- Clear error messages
+
+### Validation (Internal, Transparent Errors)
+
+All validation happens internally:
+- Excel file format
+- Sheet existence
+- Field readability
+- Template completeness
+- Placeholder formatting
+
+Errors are shown clearly with actionable messages.
+
+## Next Steps After Template Generation
+
+1. **Presale reviews checklist**: Fill in "Presale's Answer" column
+2. **Update template**: Use updated checklist to fill placeholders
+3. **Remove placeholders**: Replace `[Value] [PLACEHOLDER_ID]` with confirmed values
+4. **Generate slides**: Use `/quotation generate slide` command
+
+## Version History
+
+**v1.0.0** (2025-01-26)
+- Initial 5-step workflow
+- Support for Deal Transfer Excel files
+- 3-file output (template, reasoning, checklist)
+- Smart AI module mapping
+- Placeholder management
+- State tracking with statistics

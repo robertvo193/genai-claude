@@ -1,0 +1,98 @@
+# Quotation Command - Quick Reference
+
+## Command
+
+```bash
+/quotation generate slide <template.md>
+```
+
+## What It Does
+
+Converts verified proposal templates → PowerPoint + PDF
+
+**Input**: Template (.md, no placeholders, 12 sections)
+**Output**: proposal.pptx + proposal.pdf in timestamped directory
+
+## Example
+
+```bash
+/quotation generate slide Leda_Inio_template.md
+```
+
+**Output**:
+```
+🎯 Quotation Generation Started
+📁 Template: Leda_Inio_template.md
+📊 Project: Leda Inio Construction
+
+[Step 1/4] Create Output Directory [✓ COMPLETED]
+[Step 2/4] Generate HTML Slides [✓ COMPLETED]
+[Step 3/4] Generate PowerPoint [✓ COMPLETED]
+[Step 4/4] Generate PDF [✓ COMPLETED]
+
+✅ Complete!
+Output: ./output/Leda_Inio_20250126_163030/
+  ├── Leda_Inio_proposal.pptx (15 slides)
+  └── Leda_Inio_proposal.pdf (15 pages)
+```
+
+## Other Commands
+
+```bash
+/quotation status    # Check current status
+/quotation list      # List recent generations
+```
+
+## Requirements
+
+- ✅ Verified template (no `[PLACEHOLDER_ID]`)
+- ✅ Markdown format (.md)
+- ✅ 12 sections
+- ✅ pptx skill + pdf skill installed
+
+## Workflow (4 Steps)
+
+1. **Create Output Directory** - Timestamped folder
+2. **Generate HTML Slides** - Using 7 templates + viAct branding
+3. **Generate PowerPoint** - Via pptx skill (html2pptx)
+4. **Generate PDF** - Via pdf skill (LibreOffice)
+
+## Output Structure
+
+```
+./output/
+└── [Project]_[YYYYMMDD]_[HHMMSS]/
+    ├── [Project]_proposal.pptx
+    ├── [Project]_proposal.pdf
+    └── slides/ (HTML source)
+```
+
+## Key Features
+
+- ✅ viAct branding (blue #00AEEF, white text)
+- ✅ Text overflow prevention (smart layouts)
+- ✅ Architecture diagram (auto-generated)
+- ✅ Professional formatting
+- ✅ State management (progress tracking)
+
+## Common Errors
+
+| Error | Solution |
+|-------|----------|
+| Template not found | Check file path |
+| Has placeholders | Verify template first |
+| Skills not found | Install pptx/pdf skills |
+| PPTX failed | Check html2pptx script |
+| PDF failed | Install LibreOffice |
+
+## Tips
+
+1. **Verify template** before running
+2. **Use descriptive filenames** for templates
+3. **Check outputs** before sending to client
+4. **Use status command** to check progress
+
+## Support
+
+Full guide: `~/.claude/commands/QUOTATION_USER_GUIDE.md`
+Workflow: `~/.claude/workflows/quotation-generate.md`

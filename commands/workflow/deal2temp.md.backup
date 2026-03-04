@@ -1,0 +1,126 @@
+---
+name: deal2temp
+description: Generate proposal draft from Deal Transfer Excel file. Calls dealtransfer2template skill.
+argument-hint: "<excel-file> [--yes|-y]"
+allowed-tools: Skill(*), TodoWrite(*), Read(*), Bash(*)
+---
+
+# Deal2Temp Command
+
+Generate technical proposal draft from Deal Transfer Excel file using dealtransfer2template skill.
+
+## Overview
+
+**This command calls dealtransfer2template skill** to generate three markdown files:
+- **Template**: Client-facing proposal draft (with placeholders)
+- **Reasoning**: Internal audit trail
+- **Checklist**: Items requiring presales confirmation
+
+## Usage
+
+```bash
+# Standard mode
+/deal2temp DT_0109.xlsx
+
+# Auto mode (skip confirmations)
+/deal2temp DT_0109.xlsx --yes
+/deal2temp DT_0109.xlsx -y
+
+# With full path
+/deal2temp /path/to/DT_0109.xlsx
+```
+
+## Auto Mode
+
+When `--yes` or `-y` flag is used:
+- Auto-confirm all prompts
+- Use defaults for any decisions
+- Continue without stopping
+
+## Execution
+
+**Step 1: Parse arguments**
+```javascript
+const excelFile = $ARGUMENTS[0]
+const autoYes = $ARGUMENTS.includes('--yes') || $ARGUMENTS.includes('-y')
+```
+
+**Step 2: Validate file**
+```bash
+if [ -z "$excelFile" ]; then
+  echo "❌ Usage: /deal2temp <excel-file>"
+  echo "Example: /deal2temp DT_0109.xlsx"
+  exit 1
+fi
+
+if [ ! -f "$excelFile" ]; then
+  echo "❌ File not found: $excelFile"
+  exit 1
+fi
+```
+
+**Step 3: Call skill**
+```javascript
+// Initialize TodoWrite
+TodoWrite({
+  todos: [
+    { content: "Call dealtransfer2template skill", status: "in_progress", activeForm: "Calling dealtransfer2template skill" },
+    { content: "Verify output files generated", status: "pending", activeForm: "Verifying output files generated" }
+  ]
+})
+
+// Call skill using Skill tool
+Skill({
+  skill: "dealtransfer2template",
+  args: excelFile
+})
+
+// Mark completed
+TodoWrite({
+  todos: [
+    { content: "Call dealtransfer2template skill", status: "completed", activeForm: "Calling dealtransfer2template skill" },
+    { content: "Verify output files generated", status: "completed", activeForm: "Verifying output files generated" }
+  ]
+})
+```
+
+## Error Handling
+
+### File Not Found
+```bash
+❌ File not found: DT_0109.xlsx
+
+Please check:
+  - File path is correct
+  - File extension is .xlsx
+  - File exists in specified location
+
+Example: /deal2temp DT_0109.xlsx
+         /deal2temp /full/path/to/DT_0109.xlsx
+```
+
+### Skill Execution Failed
+```bash
+❌ dealtransfer2template skill failed
+
+Please check:
+  - Excel file format is correct (.xlsx)
+  - Required sheets exist (Commercial, Technical)
+  - File is not corrupted
+
+For help: /presales-guide
+```
+
+## Integration
+
+### Followed By
+- **`/quotation`** command - Generate final slides from verified template
+
+### Related Commands
+- **`/quotation`** - Generate PowerPoint and PDF
+- **`/presales-guide`** - Display user guide
+
+## See Also
+
+- `/quotation` - Generate final slides
+- `dealtransfer2template` skill documentation

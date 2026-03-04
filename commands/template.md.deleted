@@ -1,0 +1,759 @@
+---
+name: template
+description: Generate technical proposal templates from Deal Transfer Excel files with clear 5-step workflow
+argument-hint: "generate deal <excel.xlsx> | status | list"
+allowed-tools: SlashCommand(*), TodoWrite(*), Bash(*), Read(*), Write(*)
+---
+
+# Template Command - Generate Proposal Templates
+
+## Overview
+
+Simple command to convert Deal Transfer Excel files into technical proposal templates with reasoning and checklist files.
+
+## Usage
+
+```bash
+/template generate deal <excel.xlsx>  # Main command
+/template status                        # Check status
+/template list                          # List recent
+```
+
+## Commands
+
+### Generate Template
+
+**Command**: `/template generate deal <excel.xlsx>`
+
+**Description**: Generate proposal template, reasoning, and checklist from Deal Transfer Excel
+
+**Example**:
+```bash
+/template generate deal DT_0109.xlsx
+```
+
+**Output**:
+```
+🎯 Template Generation Started
+📁 Excel: DT_0109.xlsx
+📊 Project: Leda Inio Construction
+⏰ Timestamp: 20250126_163030
+
+[Step 1/5] Validate Excel File [🔄 IN PROGRESS]
+✓ File exists: DT_0109.xlsx
+✓ Valid Excel format (.xlsx)
+✓ S1 (Commercial) sheet found
+✓ S2 (Technical) sheet found
+
+[Step 2/5] Extract Deal Transfer Data [🔄 IN PROGRESS]
+✓ Extracted 15 fields from S1 sheet
+✓ Extracted 22 fields from S2 sheet
+✓ Mapped pain points → 5 AI modules
+✓ Identified: 4 standard modules, 1 custom module
+
+[Step 3/5] Generate Template File [🔄 IN PROGRESS]
+✓ Filled 12 sections from TEMPLATE.md
+✓ Created 8 placeholders for missing info
+✓ Clean proposal content (no source references)
+✓ Formatted: Project Requirement Statement
+
+[Step 4/5] Generate Reasoning File [🔄 IN PROGRESS]
+✓ Documented all S1/S2 sources
+✓ Showed all calculations (bandwidth, storage)
+✓ Explained all 8 estimates
+✓ Complete audit trail
+
+[Step 5/5] Generate Checklist File [🔄 IN PROGRESS]
+✓ Listed 8 placeholders
+✓ Formatted: ID | Section | Item | Estimated | Answer
+✓ Ready for presale review
+
+✅ Complete!
+Output: ./output/Leda_Inio_20250126_163030/
+  ├── Leda_Inio_template.md (12 sections, 8 placeholders)
+  ├── Leda_Inio_reasoning.md (complete audit trail)
+  └── Leda_Inio_checklist.md (8 items to confirm)
+
+📊 Statistics:
+  • S1 fields extracted: 15
+  • S2 fields extracted: 22
+  • AI modules mapped: 5
+  • Placeholders created: 8
+  • Sections filled: 12/12
+
+Next Steps:
+  1. Review Leda_Inio_checklist.md
+  2. Fill presale answers for placeholders
+  3. Update template with confirmed values
+  4. Generate slides: /quotation generate slide Leda_Inio_template.md
+```
+
+## Implementation
+
+### Step 0: Validate Input
+
+```javascript
+// Parse arguments
+const excelPath = args[2]; // "generate deal <excel.xlsx>"
+
+// Validation checks
+if (!excelPath) {
+  return "Error: Excel file path required\nUsage: /template generate deal <excel.xlsx>";
+}
+
+// Check file exists
+const fileExists = fs.existsSync(excelPath);
+if (!fileExists) {
+  return `Error: Excel file not found: ${excelPath}`;
+}
+
+// Check file format
+if (!excelPath.endsWith('.xlsx')) {
+  return "Error: Excel file must be .xlsx format (not .xls)";
+}
+
+// Check Python dependencies
+const pandasInstalled = bash('python3 -c "import pandas" 2>&1').exitCode === 0;
+const openpyxlInstalled = bash('python3 -c "import openpyxl" 2>&0').exitCode === 0;
+if (!pandasInstalled || !openpyxlInstalled) {
+  return "Error: Required Python libraries not found\nInstall: pip install pandas openpyxl";
+}
+
+// Validation passed
+console.log(`✓ Excel file validated: ${excelPath}`);
+console.log(`✓ Dependencies available`);
+```
+
+### Step 1: Initialize TodoWrite and State
+
+```javascript
+// Create TodoList with 5 steps
+TodoWrite({
+  todos: [
+    {
+      content: "Validate Excel File",
+      status: "in_progress",
+      activeForm: "Validating Excel file"
+    },
+    {
+      content: "Extract Deal Transfer Data",
+      status: "pending",
+      activeForm: "Extracting Deal Transfer data"
+    },
+    {
+      content: "Generate Template File",
+      status: "pending",
+      activeForm: "Generating template file"
+    },
+    {
+      content: "Generate Reasoning File",
+      status: "pending",
+      activeForm: "Generating reasoning file"
+    },
+    {
+      content: "Generate Checklist File",
+      status: "pending",
+      activeForm: "Generating checklist file"
+    }
+  ]
+});
+
+// Create state file
+const sessionId = `template-${Date.now()}`;
+const timestamp = bash('date +%Y%m%d_%H%M%S').trim();
+const projectName = extractProjectName(excelPath); // Extract from filename
+const outputDir = `./output/${projectName}_${timestamp}/`;
+
+const state = {
+  session_id: sessionId,
+  status: "in_progress",
+  excel_file: excelPath,
+  project_name: projectName,
+  output_dir: outputDir,
+  steps: [
+    { step: 1, name: "Validate Excel File", status: "in_progress" },
+    { step: 2, name: "Extract Deal Transfer Data", status: "pending" },
+    { step: 3, name: "Generate Template File", status: "pending" },
+    { step: 4, name: "Generate Reasoning File", status: "pending" },
+    { step: 5, name: "Generate Checklist File", status: "pending" }
+  ],
+  statistics: {
+    s1_fields_extracted: 0,
+    s2_fields_extracted: 0,
+    ai_modules_mapped: 0,
+    placeholders_created: 0,
+    sections_filled: 0
+  },
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
+};
+
+// Save state
+bash(`mkdir -p .workflow/.template/${sessionId}`);
+Write({
+  file_path: `.workflow/.template/${sessionId}/state.json`,
+  content: JSON.stringify(state, null, 2)
+});
+
+// Display start message
+console.log(`🎯 Template Generation Started`);
+console.log(`📁 Excel: ${excelPath}`);
+console.log(`📊 Project: ${projectName}`);
+console.log(`⏰ Timestamp: ${timestamp}`);
+console.log(``);
+```
+
+### Step 2: Validate Excel File
+
+```javascript
+console.log(`[Step 1/5] Validate Excel File [🔄 IN PROGRESS]`);
+
+// Run extraction script (validation mode)
+const scriptPath = '~/.claude/skills/dealtransfer2template/scripts/extract_deal_transfer.py';
+const result = bash(`python3 ${scriptPath} "${excelPath}" --validate`);
+
+if (result.exitCode !== 0) {
+  throw new Error(`Excel validation failed: ${result.stderr}`);
+}
+
+// Parse validation results
+const validation = JSON.parse(result.stdout);
+console.log(`✓ File exists: ${excelPath}`);
+console.log(`✓ Valid Excel format (.xlsx)`);
+console.log(`✓ S1 (Commercial) sheet found`);
+console.log(`✓ S2 (Technical) sheet found`);
+
+// Update state
+state.steps[0].status = "completed";
+state.steps[0].completed_at = new Date().toISOString();
+state.steps[0].output = validation;
+state.updated_at = new Date().toISOString();
+Write({
+  file_path: `.workflow/.template/${sessionId}/state.json`,
+  content: JSON.stringify(state, null, 2)
+});
+
+// Update TodoWrite
+TodoWrite({
+  todos: [
+    { content: "Validate Excel File", status: "completed", activeForm: "Validating Excel file" },
+    { content: "Extract Deal Transfer Data", status: "in_progress", activeForm: "Extracting Deal Transfer data" },
+    { content: "Generate Template File", status: "pending", activeForm: "Generating template file" },
+    { content: "Generate Reasoning File", status: "pending", activeForm: "Generating reasoning file" },
+    { content: "Generate Checklist File", status: "pending", activeForm: "Generating checklist file" }
+  ]
+});
+
+console.log(``);
+```
+
+### Step 3: Extract Deal Transfer Data
+
+```javascript
+console.log(`[Step 2/5] Extract Deal Transfer Data [🔄 IN PROGRESS]`);
+
+// Run extraction script
+const scriptPath = '~/.claude/skills/dealtransfer2template/scripts/extract_deal_transfer.py';
+const result = bash(`python3 ${scriptPath} "${excelPath}"`);
+
+if (result.exitCode !== 0) {
+  throw new Error(`Extraction failed: ${result.stderr}`);
+}
+
+// Parse extracted data
+const extractedData = JSON.parse(result.stdout);
+
+// Map pain points → AI modules
+const aiModules = mapPainPointsToModules(extractedData.s2.pain_points, extractedData.s2.use_cases);
+
+// Update statistics
+state.statistics.s1_fields_extracted = extractedData.s1.field_count;
+state.statistics.s2_fields_extracted = extractedData.s2.field_count;
+state.statistics.ai_modules_mapped = aiModules.length;
+
+console.log(`✓ Extracted ${extractedData.s1.field_count} fields from S1 sheet`);
+console.log(`✓ Extracted ${extractedData.s2.field_count} fields from S2 sheet`);
+console.log(`✓ Mapped pain points → ${aiModules.length} AI modules`);
+
+// Count standard vs custom
+const standardModules = aiModules.filter(m => m.is_standard).length;
+const customModules = aiModules.filter(m => !m.is_standard).length;
+console.log(`✓ Identified: ${standardModules} standard modules, ${customModules} custom modules`);
+
+// Update state
+state.steps[1].status = "completed";
+state.steps[1].completed_at = new Date().toISOString();
+state.steps[1].output = extractedData;
+state.statistics.ai_modules_mapped = aiModules.length;
+state.updated_at = new Date().toISOString();
+Write({
+  file_path: `.workflow/.template/${sessionId}/state.json`,
+  content: JSON.stringify(state, null, 2)
+});
+
+// Update TodoWrite
+TodoWrite({
+  todos: [
+    { content: "Validate Excel File", status: "completed", activeForm: "Validating Excel file" },
+    { content: "Extract Deal Transfer Data", status: "completed", activeForm: "Extracting Deal Transfer data" },
+    { content: "Generate Template File", status: "in_progress", activeForm: "Generating template file" },
+    { content: "Generate Reasoning File", status: "pending", activeForm: "Generating reasoning file" },
+    { content: "Generate Checklist File", status: "pending", activeForm: "Generating checklist file" }
+  ]
+});
+
+console.log(``);
+```
+
+### Step 4: Generate Template File
+
+```javascript
+console.log(`[Step 3/5] Generate Template File [🔄 IN PROGRESS]`);
+
+// Read TEMPLATE.md structure
+const templateStructure = fs.readFileSync('~/.claude/skills/dealtransfer2template/references/TEMPLATE.md', 'utf8');
+
+// Generate template content
+const templateContent = generateTemplateContent(extractedData, aiModules, templateStructure);
+
+// Save template file
+const templatePath = `${outputDir}${state.project_name}_template.md`;
+fs.writeFileSync(templatePath, templateContent);
+
+// Count placeholders
+const placeholders = extractPlaceholders(templateContent);
+state.statistics.placeholders_created = placeholders.length;
+state.statistics.sections_filled = 12;
+
+console.log(`✓ Filled 12 sections from TEMPLATE.md`);
+console.log(`✓ Created ${placeholders.length} placeholders for missing info`);
+console.log(`✓ Clean proposal content (no source references)`);
+console.log(`✓ Formatted: Project Requirement Statement`);
+
+// Update state
+state.steps[2].status = "completed";
+state.steps[2].completed_at = new Date().toISOString();
+state.steps[2].output = templatePath;
+state.updated_at = new Date().toISOString();
+Write({
+  file_path: `.workflow/.template/${sessionId}/state.json`,
+  content: JSON.stringify(state, null, 2)
+});
+
+// Update TodoWrite
+TodoWrite({
+  todos: [
+    { content: "Validate Excel File", status: "completed", activeForm: "Validating Excel file" },
+    { content: "Extract Deal Transfer Data", status: "completed", activeForm: "Extracting Deal Transfer data" },
+    { content: "Generate Template File", status: "completed", activeForm: "Generating template file" },
+    { content: "Generate Reasoning File", status: "in_progress", activeForm: "Generating reasoning file" },
+    { content: "Generate Checklist File", status: "pending", activeForm: "Generating checklist file" }
+  ]
+});
+
+console.log(``);
+```
+
+### Step 5: Generate Reasoning File
+
+```javascript
+console.log(`[Step 4/5] Generate Reasoning File [🔄 IN PROGRESS]`);
+
+// Generate reasoning content
+const reasoningContent = generateReasoningContent(extractedData, aiModules, placeholders, templateStructure);
+
+// Save reasoning file
+const reasoningPath = `${outputDir}${state.project_name}_reasoning.md`;
+fs.writeFileSync(reasoningPath, reasoningContent);
+
+console.log(`✓ Documented all S1/S2 sources`);
+console.log(`✓ Showed all calculations (bandwidth, storage)`);
+console.log(`✓ Explained all ${placeholders.length} estimates`);
+console.log(`✓ Complete audit trail`);
+
+// Update state
+state.steps[3].status = "completed";
+state.steps[3].completed_at = new Date().toISOString();
+state.steps[3].output = reasoningPath;
+state.updated_at = new Date().toISOString();
+Write({
+  file_path: `.workflow/.template/${sessionId}/state.json`,
+  content: JSON.stringify(state, null, 2)
+});
+
+// Update TodoWrite
+TodoWrite({
+  todos: [
+    { content: "Validate Excel File", status: "completed", activeForm: "Validating Excel file" },
+    { content: "Extract Deal Transfer Data", status: "completed", activeForm: "Extracting Deal Transfer data" },
+    { content: "Generate Template File", status: "completed", activeForm: "Generating template file" },
+    { content: "Generate Reasoning File", status: "completed", activeForm: "Generating reasoning file" },
+    { content: "Generate Checklist File", status: "in_progress", activeForm: "Generating checklist file" }
+  ]
+});
+
+console.log(``);
+```
+
+### Step 6: Generate Checklist File
+
+```javascript
+console.log(`[Step 5/5] Generate Checklist File [🔄 IN PROGRESS]`);
+
+// Generate checklist content
+const checklistContent = generateChecklistContent(placeholders);
+
+// Save checklist file
+const checklistPath = `${outputDir}${state.project_name}_checklist.md`;
+fs.writeFileSync(checklistPath, checklistContent);
+
+console.log(`✓ Listed ${placeholders.length} placeholders`);
+console.log(`✓ Formatted: ID | Section | Item | Estimated | Answer`);
+console.log(`✓ Ready for presale review`);
+
+// Update state
+state.steps[4].status = "completed";
+state.steps[4].completed_at = new Date().toISOString();
+state.steps[4].output = checklistPath;
+state.status = "completed";
+state.updated_at = new Date().toISOString();
+Write({
+  file_path: `.workflow/.template/${sessionId}/state.json`,
+  content: JSON.stringify(state, null, 2)
+});
+
+// Update TodoWrite
+TodoWrite({
+  todos: [
+    { content: "Validate Excel File", status: "completed", activeForm: "Validating Excel file" },
+    { content: "Extract Deal Transfer Data", status: "completed", activeForm: "Extracting Deal Transfer data" },
+    { content: "Generate Template File", status: "completed", activeForm: "Generating template file" },
+    { content: "Generate Reasoning File", status: "completed", activeForm: "Generating reasoning file" },
+    { content: "Generate Checklist File", status: "completed", activeForm: "Generating checklist file" }
+  ]
+});
+
+console.log(``);
+```
+
+### Step 7: Display Completion Message
+
+```javascript
+console.log(`✅ Complete!`);
+console.log(`Output: ${outputDir}`);
+console.log(`  ├── ${state.project_name}_template.md (12 sections, ${placeholders.length} placeholders)`);
+console.log(`  ├── ${state.project_name}_reasoning.md (complete audit trail)`);
+console.log(`  └── ${state.project_name}_checklist.md (${placeholders.length} items to confirm)`);
+console.log(``);
+console.log(`📊 Statistics:`);
+console.log(`  • S1 fields extracted: ${state.statistics.s1_fields_extracted}`);
+console.log(`  • S2 fields extracted: ${state.statistics.s2_fields_extracted}`);
+console.log(`  • AI modules mapped: ${state.statistics.ai_modules_mapped}`);
+console.log(`  • Placeholders created: ${state.statistics.placeholders_created}`);
+console.log(`  • Sections filled: ${state.statistics.sections_filled}/12`);
+console.log(``);
+console.log(`Next Steps:`);
+console.log(`  1. Review ${state.project_name}_checklist.md`);
+console.log(`  2. Fill presale answers for placeholders`);
+console.log(`  3. Update template with confirmed values`);
+console.log(`  4. Generate slides: /quotation generate slide ${state.project_name}_template.md`);
+console.log(``);
+console.log(`Session ID: ${sessionId}`);
+console.log(`State saved: .workflow/.template/${sessionId}/state.json`);
+```
+
+## Status Command
+
+**Command**: `/template status`
+
+**Description**: Check status of current or recent template generation
+
+**Output**:
+```
+📊 Template Generation Status
+
+Session: template-1737910230456
+Status: ✅ COMPLETED
+Excel: DT_0109.xlsx
+Project: Leda Inio Construction
+Output: ./output/Leda_Inio_20250126_163030/
+
+Steps:
+  [✓] Step 1: Validate Excel File (completed in 0.5s)
+  [✓] Step 2: Extract Deal Transfer Data (completed in 2.3s)
+  [✓] Step 3: Generate Template File (completed in 4.1s)
+  [✓] Step 4: Generate Reasoning File (completed in 3.8s)
+  [✓] Step 5: Generate Checklist File (completed in 1.2s)
+
+Statistics:
+  • S1 fields extracted: 15
+  • S2 fields extracted: 22
+  • AI modules mapped: 5
+  • Placeholders created: 8
+  • Sections filled: 12/12
+
+Total Time: 11.9 seconds
+```
+
+## List Command
+
+**Command**: `/template list`
+
+**Description**: List recent template generations
+
+**Output**:
+```
+📋 Recent Template Generations
+
+1. Leda_Inio_20250126_163030
+   Status: ✅ COMPLETED
+   Excel: DT_0109.xlsx
+   Output: ./output/Leda_Inio_20250126_163030/
+   Placeholders: 8
+   Time: 2025-01-26 16:30:30
+
+2. Construction_Safety_20250125_143022
+   Status: ✅ COMPLETED
+   Excel: DT_0108.xlsx
+   Output: ./output/Construction_Safety_20250125_143022/
+   Placeholders: 12
+   Time: 2025-01-25 14:30:22
+```
+
+## Helper Functions
+
+### extractProjectName
+
+Extract project name from Excel filename:
+
+```javascript
+function extractProjectName(excelPath) {
+  const filename = path.basename(excelPath, '.xlsx');
+
+  // Remove common prefixes
+  const cleanName = filename
+    .replace(/^DT_/i, '')
+    .replace(/^DealTransfer_/i, '')
+    .replace(/^deal_/i, '')
+    .replace(/[_\s]+/g, '_');
+
+  return cleanName || 'Project';
+}
+```
+
+### mapPainPointsToModules
+
+Map pain points and use cases to AI modules:
+
+```javascript
+function mapPainPointsToModules(painPoints, useCases) {
+  // Load STANDARD_MODULES.md
+  const standardModules = loadStandardModules();
+
+  // Load logic document
+  const logicDoc = loadModuleLogicDocument();
+
+  // Map pain points → modules
+  const modules = [];
+  painPoints.forEach(point => {
+    const module = findMatchingModule(point, standardModules, logicDoc);
+    if (module) {
+      modules.push(module);
+    }
+  });
+
+  // Map use cases → modules
+  useCases.forEach(useCase => {
+    const module = findMatchingModule(useCase, standardModules, logicDoc);
+    if (module && !modules.includes(module)) {
+      modules.push(module);
+    }
+  });
+
+  return modules;
+}
+```
+
+### generateTemplateContent
+
+Generate template content following clean content rules:
+
+```javascript
+function generateTemplateContent(extractedData, aiModules, templateStructure) {
+  let content = '';
+
+  // Fill each of 12 sections
+  for (let i = 1; i <= 12; i++) {
+    const section = fillSection(i, extractedData, aiModules);
+    content += section + '\n\n';
+  }
+
+  return content;
+}
+
+function fillSection(sectionNumber, extractedData, aiModules) {
+  switch(sectionNumber) {
+    case 1:
+      return generateCoverPage(extractedData);
+    case 2:
+      return generateProjectRequirementStatement(extractedData, aiModules);
+    case 3:
+      return generateScopeOfWork(extractedData);
+    // ... etc for all 12 sections
+  }
+}
+```
+
+### generateReasoningContent
+
+Generate complete audit trail:
+
+```javascript
+function generateReasoningContent(extractedData, aiModules, placeholders, templateStructure) {
+  let content = '# Reasoning and Source Documentation\n\n';
+
+  // For each section
+  for (let i = 1; i <= 12; i++) {
+    content += `## ${i}. ${getSectionTitle(i)}\n\n`;
+
+    // Document sources
+    content += `**Source**: ${extractedData.sources[i]}\n\n`;
+
+    // Show calculations
+    if (extractedData.calculations[i]) {
+      content += `**Calculation**:\n${extractedData.calculations[i]}\n\n`;
+    }
+
+    // Explain placeholders
+    const sectionPlaceholders = placeholders.filter(p => p.section === i);
+    sectionPlaceholders.forEach(ph => {
+      content += `**Placeholder ${ph.id}**: ${ph.reasoning}\n\n`;
+    });
+  }
+
+  return content;
+}
+```
+
+### generateChecklistContent
+
+Generate checklist table:
+
+```javascript
+function generateChecklistContent(placeholders) {
+  let content = '# Placeholder Checklist\n\n';
+  content += '| ID | Section | Item | Content Estimated | Presale\'s Answer |\n';
+  content += '|----|---------|------|-------------------|------------------|\n';
+
+  placeholders.forEach(ph => {
+    content += `| ${ph.id} | ${ph.section} | ${ph.item} | ${ph.estimated} | |\n`;
+  });
+
+  return content;
+}
+```
+
+## Error Handling
+
+All errors are shown clearly with actionable messages:
+
+```
+❌ Error: Excel file not found
+   File: nonexistent_file.xlsx
+   Solution: Check file path and try again
+
+❌ Error: Invalid Excel format
+   File: deal.xls (not .xlsx)
+   Solution: Convert to .xlsx format (not .xls)
+
+❌ Error: S1 sheet not found
+   Sheet: Commercial
+   Solution: Ensure Excel has S1 (Commercial) sheet
+
+❌ Error: S2 sheet not found
+   Sheet: Technical
+   Solution: Ensure Excel has S2 (Technical) sheet
+
+❌ Error: Required Python libraries not found
+   Libraries: pandas, openpyxl
+   Solution: pip install pandas openpyxl
+
+❌ Error: Extraction failed
+   Reason: Unable to parse field "Customer Name"
+   Solution: Check Excel field names match reference
+```
+
+## Validation Summary
+
+### Input Validation
+- ✅ Excel file exists
+- ✅ Excel format is .xlsx (not .xls)
+- ✅ S1 (Commercial) sheet exists
+- ✅ S2 (Technical) sheet exists
+- ✅ Python pandas installed
+- ✅ Python openpyxl installed
+
+### Output Validation
+- ✅ 3 files created (template, reasoning, checklist)
+- ✅ Template has 12 sections
+- ✅ Template has no source references
+- ✅ Template has clean content
+- ✅ Placeholders formatted correctly
+- ✅ Reasoning has all sources
+- ✅ Checklist has all placeholders
+
+## Key Features
+
+### User-Facing
+- ✅ Simple command: `/template generate deal <excel.xlsx>`
+- ✅ Clear progress: Step 1/5, 2/5, 3/5, 4/5, 5/5
+- ✅ Visual indicators: 🔄 in_progress, ✅ completed, ⏳ pending
+- ✅ Statistics output (fields extracted, placeholders created)
+- ✅ Next steps guidance
+
+### Internal (Hidden from Users)
+- ✅ Excel parsing complexity
+- ✅ Field name mappings
+- ✅ AI module logic
+- ✅ Standard module database lookups
+- ✅ Template structure details
+- ✅ Placeholder ID generation
+- ✅ Calculation formulas
+
+### Quality Checks
+- ✅ Clean template content (no source references)
+- ✅ Complete reasoning (all sources documented)
+- ✅ Organized checklist (sorted by section)
+- ✅ Consistent formatting
+- ✅ Proper placeholder IDs
+
+## Next Steps Workflow
+
+After template generation, users should:
+
+1. **Review checklist**: Open `{Project}_checklist.md`
+2. **Fill answers**: Add presale confirmations in "Presale's Answer" column
+3. **Update template**: Replace `[Value] [PLACEHOLDER_ID]` with confirmed values
+4. **Remove placeholders**: Clean template should have no placeholders
+5. **Generate slides**: Use `/quotation generate slide {Project}_template.md`
+
+## Integration with Quotation Workflow
+
+```
+/template generate deal DT_0109.xlsx
+  ↓
+Generates 3 files:
+  • DT_0109_template.md (with placeholders)
+  • DT_0109_reasoning.md
+  • DT_0109_checklist.md
+  ↓
+Presale reviews checklist, fills answers
+  ↓
+Updates template with confirmed values
+  ↓
+/quotation generate slide DT_0109_template.md
+  ↓
+Generates:
+  • DT_0109_proposal.pptx
+  • DT_0109_proposal.pdf
+```
