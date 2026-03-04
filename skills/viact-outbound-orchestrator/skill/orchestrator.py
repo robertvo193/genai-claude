@@ -7,7 +7,7 @@ Coordinates Google Sheets and Gmail for automated BD outreach.
 import os
 import sys
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 # Resolve paths relative to this file's location
@@ -199,7 +199,7 @@ def send_pending_emails():
                     )
                     print(f"  {lead_data['email']} — sent (thread_id={thread_id})")
 
-                timestamp = datetime.now().isoformat() + "Z"
+                timestamp = datetime.now(timezone.utc).isoformat()
                 update_row_status(file_id, sheet_name, row_number, column_mappings,
                                   status="Email Sent",
                                   message_id=thread_id,

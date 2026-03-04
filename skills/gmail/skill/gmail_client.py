@@ -8,7 +8,7 @@ import os
 import base64
 import email
 from email.message import EmailMessage
-from datetime import datetime
+from datetime import datetime, timezone
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -201,7 +201,9 @@ def has_recent_reply(service, to, subject, since_timestamp, thread_id=None):
             if msg_date_str:
                 try:
                     msg_date = email.utils.parsedate_to_datetime(msg_date_str)
-                    if msg_date and msg_date > since_dt:
+                    # Convert message date to UTC for consistent comparison with since_dt
+                    msg_date_utc = msg_date.astimezone(timezone.utc) if msg_date.tzinfo else msg_date.replace(tzinfo=timezone.utc)
+                    if msg_date_utc and msg_date_utc > since_dt:
                         return True
                 except (ValueError, TypeError):
                     continue
