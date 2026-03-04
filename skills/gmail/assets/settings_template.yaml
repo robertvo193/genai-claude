@@ -1,0 +1,27 @@
+# Gmail API OAuth2 Settings Template
+# Rename this file to settings.yaml and place in ~/.gmail-skill/
+
+client_config:
+  # Your Google Cloud project client ID
+  client_id: YOUR_CLIENT_ID_HERE
+
+  # Your Google Cloud project client secret
+  client_secret: YOUR_CLIENT_SECRET_HERE
+
+# OAuth2 configuration
+auth:
+  # OAuth2 scopes (default is send + read-only)
+  scopes:
+    - https://www.googleapis.com/auth/gmail.send
+    - https://www.googleapis.com/auth/gmail.readonly
+
+  # Token storage location (relative to ~/.gmail-skill/)
+  token_file: token_gmail.json
+
+# Server configuration for OAuth flow
+server:
+  # Port for local OAuth callback (0 = random available port)
+  port: 0
+
+  # Redirect URI (must match what's configured in Google Cloud Console)
+  redirect_uri: http://localhost
