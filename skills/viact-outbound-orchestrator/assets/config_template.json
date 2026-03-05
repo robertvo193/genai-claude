@@ -1,0 +1,19 @@
+{
+  "spreadsheet_url": "https://docs.google.com/spreadsheets/d/1ITkXSDUl4bCp2lLH2Obyns6Q8jz-QJ0iNt7XQJNxCkE/edit?gid=0#gid=0",
+  "sheet_name": "Sheet1",
+  "range": "A:AR",
+  "column_mappings": {
+    "lead_name": "B",
+    "company": "T",
+    "deal_id": "A",
+    "email": "AR",
+    "subject": "AL",
+    "drafted_email": "AM",
+    "hitl_approved": "AN",
+    "status": "AO",
+    "sent_timestamp": "AP",
+    "message_id": "AQ"
+  },
+  "approved_values": ["TRUE", "true", "True", "YES", "yes", "1"],
+  "skip_statuses": ["Email Sent", "Client Replied", "Error"]
+}

@@ -10,3 +10,7 @@ projects/*
 **/statsig/*
 todos/*
 **/prompts/*
+history.jsonl
+shell-snapshots/*
+.credentials.json
+plugins/blocklist.json
