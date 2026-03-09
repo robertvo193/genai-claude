@@ -165,6 +165,9 @@ python skill/orchestrator.py check-replies
 
 # Check status
 python skill/orchestrator.py status
+
+# Sync Pipedrive leads to Google Sheet
+python skill/sync_pipedrive_to_sheet.py --limit 100
 ```
 
 ### Run via Python
@@ -174,18 +177,26 @@ import sys
 sys.path.insert(0, '~/.claude/skills/viact-outbound-orchestrator/skill')
 
 from orchestrator import send_pending_emails, check_client_replies
+from sync_pipedrive_to_sheet import sync_pipedrive_to_sheet
 
 results = send_pending_emails()
 print(f"Emails sent: {results['emails_sent']}")
 
 results = check_client_replies()
 print(f"Replies found: {results['replied']}")
+
+results = sync_pipedrive_to_sheet(limit=100)
+print(f"Leads synced: {results['fetched']}")
 ```
 
 ## Available Functions
+from sync_pipedrive_to_sheet import sync_pipedrive_to_sheet  # Sync Pipedrive leads to Google Sheet
 
-```python
-from orchestrator import (
+
+
+from sync_pipedrive_to_sheet import sync_pipedrive_to_sheet  # Sync Pipedrive leads to Google Sheet
+
+)
     send_pending_emails,     # Send emails for HITL-approved rows
     check_client_replies,    # Check for client replies on sent rows
     get_status,              # Get current status
@@ -195,7 +206,7 @@ from orchestrator import (
     extract_lead_data,       # Extract lead data from row
     is_approved,             # Check if HITL approved
     should_skip,             # Check if should skip based on status
-    update_row_status        # Update sheet status (batched)
+    update_row_status,        # Update sheet status (batched)
 )
 ```
 
@@ -218,3 +229,30 @@ from orchestrator import (
 ### Column Mapping Mismatch
 
 Verify column mappings match your sheet layout and update `~/.viact-orchestrator/config.json` accordingly.
+
+### Pipedrive Sync Function
+
+The `sync_pipedrive_to_sheet()` function integrates your Pipedrive CRM with the Google Sheet:
+
+**Features:**
+- ✅ Fetches up to 100 newest leads from Pipedrive (sorted by update_time)
+- ✅ Reads existing leads from the Google Sheet
+- ✅ Uses upsert logic: updates existing leads by lead_id, adds new leads
+- ✅ Maps Pipedrive lead fields to sheet columns automatically
+- ✅ Sets default status to "Pending" for new leads
+- ✅ Leaves email, drafted_email, and approval fields empty for manual review
+
+**Field Mapping:**
+| Pipedrive Field | Sheet Column | Description |
+|----------------|---------------|-------------|
+| id | A (deal_id) | Unique lead identifier for deduplication |
+| title | B (lead_name) | Lead title/name |
+| organization_name | T (company) | Company/organization name |
+| - | AR (email) | Left empty (can be filled manually) |
+| - | AL (subject) | Auto-generated: "Following up on: {title}" |
+| - | AM (drafted_email) | Left empty (can be filled manually) |
+| - | AN (hitl_approved) | Left empty (requires HITL approval) |
+| - | AO (status) | Set to "Pending" for new leads |
+| - | AP (sent_timestamp) | Left empty |
+| - | AQ (message_id) | Left empty |
+
