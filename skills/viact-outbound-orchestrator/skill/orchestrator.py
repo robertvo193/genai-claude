@@ -16,17 +16,20 @@ _SKILLS_ROOT = os.path.normpath(os.path.join(_SKILL_DIR, '..', '..'))
 
 sys.path.insert(0, os.path.join(_SKILLS_ROOT, 'google-drive', 'scripts'))
 sys.path.insert(0, os.path.join(_SKILLS_ROOT, 'gmail', 'skill'))
+sys.path.insert(0, os.path.join(_SKILLS_ROOT, 'pipedrive', 'scripts'))
 sys.path.insert(0, _SKILL_DIR)
 
 try:
     from gsheets_helper import parse_spreadsheet_url, read_sheet_data, update_sheet_data
     from gmail_client import authenticate, send_email, reply_in_thread, has_recent_reply, find_thread_id
+    import pipedrive
 except ImportError as e:
     print(f"Import error: {e}")
     print("Please ensure all dependencies are installed:")
     print("  - google-drive: pip install -r ~/.claude/skills/google-drive/requirements.txt")
     print("  - gmail: pip install -r ~/.claude/skills/gmail/requirements.txt")
     print("  - orchestrator: pip install -r ~/.claude/skills/viact-outbound-orchestrator/requirements.txt")
+    print("  - pipedrive: pip install requests")
     sys.exit(1)
 
 
